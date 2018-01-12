@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- スケジューラサービス -->
+        <service name="Scheduler"
+                 code="jp.ossc.nimbus.service.scheduler.TimerSchedulerService">
+            
+            <!-- スケジュールファクトリサービスのサービス名を設定する -->
+            <attribute name="ScheduleFactoryServiceName">#ScheduleFactory</attribute>
+            
+            <depends>ScheduleFactory</depends>
+            
+        </service>
+        
+        <!-- 日付マッピングスケジュールファクトリサービス -->
+        <service name="ScheduleFactory"
+                 code="jp.ossc.nimbus.service.scheduler.DateMappingScheduleFactoryService">
+            
+            <!-- 日付キー毎のスケジュールファクトリサービスのサービス名を設定する
+              平日の場合（月～金）、WeekdayScheduleFactoryサービス
+              休日の場合（土、日）、HolidayScheduleFactoryサービス
+            -->
+            <attribute name="KeyAndScheduleFactoryServiceName">
+                WEEK@MONDAY OR WEEK@TUESDAY OR WEEK@WEDNESDAY OR WEEK@THURSDAY OR WEEK@FRIDAY=#WeekdayScheduleFactory,
+                WEEK@SATURDAY OR WEEK@SUNDAY=#HolidayScheduleFactory
+            </attribute>
+            
+            <depends>WeekdayScheduleFactory</depends>
+            <depends>HolidayScheduleFactory</depends>
+            
+        </service>
+        
+        <!-- 平日用スケジュールファクトリサービス -->
+        <service name="WeekdayScheduleFactory"
+                 code="jp.ossc.nimbus.service.scheduler.SimpleScheduleFactoryService">
+            
+            <!-- スケジュールサービスのサービス名を設定する -->
+            <attribute name="ScheduleServiceNames">
+                #WeekdaySchedule1
+                #WeekdaySchedule2
+            </attribute>
+            
+            <depends>
+                
+                <!-- 平日スケジュール１-->
+                <service name="WeekdaySchedule1"
+                         code="jp.ossc.nimbus.service.scheduler.TimerScheduleService">
+                    
+                    <!-- タスクを設定する -->
+                    <attribute name="Task">
+                        <object code="sample.task.SampleTask">
+                            <attribute name="Name">平日スケジュール１</attribute>
+                        </object>
+                    </attribute>
+                    
+                    <!-- 遅延時間を設定する -->
+                    <attribute name="Delay">0</attribute>
+                    
+                </service>
+                
+            </depends>
+            
+            <depends>
+                
+                <!-- 平日スケジュール２-->
+                <service name="WeekdaySchedule2"
+                         code="jp.ossc.nimbus.service.scheduler.TimerScheduleService">
+                    
+                    <!-- タスクを設定する -->
+                    <attribute name="Task">
+                        <object code="sample.task.SampleTask">
+                            <attribute name="Name">平日スケジュール２</attribute>
+                        </object>
+                    </attribute>
+                    
+                    <!-- 遅延時間を設定する -->
+                    <attribute name="Delay">500</attribute>
+                    
+                    <!-- 繰り返し間隔を設定する -->
+                    <attribute name="Period">1000</attribute>
+                    
+                    <!-- 繰り返し回数を設定する -->
+                    <attribute name="Count">5</attribute>
+                    
+                </service>
+                
+            </depends>
+            
+        </service>
+        
+        <!-- 休日用スケジュールファクトリサービス -->
+        <service name="HolidayScheduleFactory"
+                 code="jp.ossc.nimbus.service.scheduler.SimpleScheduleFactoryService">
+            
+            <!-- スケジュールサービスのサービス名を設定する -->
+            <attribute name="ScheduleServiceNames">
+                #HolidaySchedule
+            </attribute>
+            
+            <depends>
+                
+                <!-- 休日スケジュール-->
+                <service name="HolidaySchedule"
+                         code="jp.ossc.nimbus.service.scheduler.TimerScheduleService">
+                    
+                    <!-- タスクを設定する -->
+                    <attribute name="Task">
+                        <object code="sample.task.SampleTask">
+                            <attribute name="Name">休日スケジュール</attribute>
+                        </object>
+                    </attribute>
+                    
+                    <!-- 遅延時間を設定する -->
+                    <attribute name="Delay">1000</attribute>
+                    
+                </service>
+                
+            </depends>
+            
+        </service>
+        
+    </manager>
+    
+</server>

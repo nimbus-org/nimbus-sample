@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- アスペクト対象のサービス -->
+        <service name="Service1"
+                 code="sample.service.POJOService">
+            <attribute name="Message">Hello!</attribute>
+        </service>
+        
+        <!-- アスペクトで挟み込むInterceptorChainListサービス
+          アスペクト定義ファイルで設定したサービス名と一致しなければならない。
+        -->
+        <service name="SampleInterceptorChainList"
+                 code="jp.ossc.nimbus.service.aop.DefaultInterceptorChainListService">
+            
+            <!-- チェインさせるInterceptorサービスのサービス名を順次設定する -->
+            <attribute name="InterceptorServiceNames">
+                #SleepInterceptor
+            </attribute>
+            
+            <depends>
+                
+                <!-- メソッド呼び出しをスリープさせるInterceptorサービス -->
+                <service name="SleepInterceptor"
+                         code="jp.ossc.nimbus.service.aop.interceptor.SleepInterceptorService">
+                    
+                    <!-- スリープする時間[ms]を設定する -->
+                    <attribute name="sleepTime">2000</attribute>
+                    
+                </service>
+                
+            </depends>
+            
+            <depends>
+                
+                <!-- メソッド呼び出しを戻り値をnullで返すInterceptorサービス -->
+                <service name="NullReturnInterceptor"
+                         code="jp.ossc.nimbus.service.aop.interceptor.NullReturnInterceptorService"/>
+            </depends>
+            
+        </service>
+        
+        <service name="SampleInvoker"
+                 code="jp.ossc.nimbus.service.aop.javassist.WrappedMethodReflectionCallInvokerService"/>
+        
+    </manager>
+    
+</server>

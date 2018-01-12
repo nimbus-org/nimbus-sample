@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- スレッド毎のコンテキスト情報を保持するContextサービス -->
+        <service name="Context"
+                 code="jp.ossc.nimbus.service.context.ThreadContextService">
+            
+            <!-- 任意の属性名のコンテキスト情報を設定できる -->
+            <attribute name="A">hoge</attribute>
+            <attribute name="B" type="int">100</attribute>
+            <attribute name="C">
+                <object code="java.util.HashSet">
+                    <invoke name="add">
+                        <argument type="java.lang.Object" valueType="int">1</argument>
+                    </invoke>
+                    <invoke name="add">
+                        <argument type="java.lang.Object" valueType="int">2</argument>
+                    </invoke>
+                    <invoke name="add">
+                        <argument type="java.lang.Object" valueType="int">3</argument>
+                    </invoke>
+                </object>
+            </attribute>
+            
+        </service>
+    </manager>
+    
+</server>

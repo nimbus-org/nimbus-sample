@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="true"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- クラスタサービス -->
+        <service name="Cluster"
+                 code="jp.ossc.nimbus.service.keepalive.ClusterService">
+            <attribute name="BindAddress">0.0.0.0</attribute>
+            <attribute name="MulticastGroupAddress">239.0.0.10</attribute>
+            <attribute name="AnonymousUnicastPort">true</attribute>
+            <attribute name="HeartBeatRetryCount">2</attribute>
+<ifdef name="Mode" value="Server">
+            <attribute name="JoinOnStart">false</attribute>
+</ifdef>
+<ifdef name="Mode" value="Client">
+            <attribute name="Client">true</attribute>
+</ifdef>
+        </service>
+        
+<ifdef name="Mode" value="Server">
+        
+        <!-- リモートサービス呼び出しサーバサービス -->
+        <service name="RemoteServiceServer"
+                 code="jp.ossc.nimbus.service.proxy.RemoteServiceServerService">
+            <attribute name="ClusterServiceName">#Cluster</attribute>
+            <attribute name="RemoteServiceName">#Map</attribute>
+            <attribute name="InterceptorChainListServiceName">#InterceptorChainList</attribute>
+            <depends>Cluster</depends>
+            <depends>Map</depends>
+            <depends>
+                <!-- インターセプタチェインリストサービス -->
+                <service name="InterceptorChainList"
+                         code="jp.ossc.nimbus.service.aop.DefaultInterceptorChainListService">
+                    <attribute name="InterceptorServiceNames">
+                        #TraceLoggingInterceptor
+                    </attribute>
+                    <depends>
+                        <!-- トレースロギングインターセプタサービス -->
+                        <service name="TraceLoggingInterceptor"
+                                 code="jp.ossc.nimbus.service.aop.interceptor.TraceLoggingInterceptorService"/>
+                    </depends>
+                </service>
+            </depends>
+        </service>
+        
+        <!-- サーバ側のMapサービス -->
+        <service name="Map"
+                 code="java.util.HashMap">
+            <attribute name="Message">Hello!!</attribute>
+        </service>
+</ifdef>
+<ifdef name="Mode" value="Client">
+        
+        <!-- クライアント側のMapプロキシサービス -->
+        <service name="Map"
+                 code="jp.ossc.nimbus.service.proxy.RemoteClientService">
+            <attribute name="RemoteInterfaceClassName">java.util.Map</attribute>
+            <attribute name="RemoteServiceName">Nimbus#Map</attribute>
+            <attribute name="InvokerServiceName">#ClusterInvoker</attribute>
+            <depends>ClusterInvoker</depends>
+        </service>
+        
+        <!-- クラスタ呼び出しサービス -->
+        <service name="ClusterInvoker"
+                 code="jp.ossc.nimbus.service.proxy.invoker.ClusterInvokerService">
+            <attribute name="KeepAliveCheckerSelectorServiceName">#KeepAliveCheckerSelector</attribute>
+            <depends>KeepAliveCheckerSelector</depends>
+        </service>
+        
+        <!-- ファーストアベイラブル生存監視サービス -->
+        <service name="KeepAliveCheckerSelector"
+                 code="jp.ossc.nimbus.service.keepalive.FirstAvailableKeepAliveCheckerSelectorService">
+            <attribute name="ClusterServiceName">#Cluster</attribute>
+            <depends>Cluster</depends>
+        </service>
+</ifdef>
+    </manager>
+    
+</server>

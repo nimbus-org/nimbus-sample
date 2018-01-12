@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="true"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- クラスタサービス -->
+        <service name="Cluster"
+                 code="jp.ossc.nimbus.service.keepalive.ClusterService">
+            <attribute name="BindAddress">0.0.0.0</attribute>
+            <attribute name="MulticastGroupAddress">239.0.0.10</attribute>
+            <attribute name="AnonymousUnicastPort">true</attribute>
+            <attribute name="HeartBeatRetryCount">2</attribute>
+            <attribute name="JoinOnStart">false</attribute>
+        </service>
+        
+        <!-- 分散サーバのBeanFlowInvokerFactoryサービス -->
+        <service name="ServerBeanFlowInvokerFactory"
+                 code="jp.ossc.nimbus.service.beancontrol.ClientBeanFlowInvokerFactoryService">
+            <attribute name="ClusterServiceName">#Cluster</attribute>
+            <depends>Cluster</depends>
+            <depends>BeanFlowInvokerServer</depends>
+        </service>
+        
+        <!-- BeanFlowInvokerServerサービス -->
+        <service name="BeanFlowInvokerServer"
+                 code="jp.ossc.nimbus.service.beancontrol.BeanFlowInvokerServerService">
+            <attribute name="ClusterServiceName">#Cluster</attribute>
+            <attribute name="BeanFlowInvokerFactoryServiceName">#BeanFlowInvokerFactory</attribute>
+            <depends>Cluster</depends>
+            <depends>BeanFlowInvokerFactory</depends>
+        </service>
+        
+        <!-- BeanFlowInvokerFactoryサービス -->
+        <service name="BeanFlowInvokerFactory"
+                 code="jp.ossc.nimbus.service.beancontrol.DefaultBeanFlowInvokerFactoryService">
+            <attribute name="DirPaths">flows</attribute>
+            <attribute name="BeanFlowInvokerAccessClass">jp.ossc.nimbus.service.beancontrol.BeanFlowInvokerAccessImpl2</attribute>
+            <attribute name="Validate">true</attribute>
+            <attribute name="InterceptorChainFactoryServiceName">#InterceptorChainFactory</attribute>
+            <attribute name="AsynchInvokeQueueHandlerContainerServiceName">#QueueHandlerContainer</attribute>
+            <depends>InterceptorChainFactory</depends>
+            <depends>QueueHandlerContainer</depends>
+        </service>
+        
+        <!-- InterceptorChainFactoryサービス -->
+        <service name="InterceptorChainFactory"
+                 code="jp.ossc.nimbus.service.aop.DefaultInterceptorChainFactoryService">
+            <attribute name="DefaultInterceptorChainListServiceName">#InterceptorChainList</attribute>
+            <depends>
+                <!-- インターセプタチェインリストサービス -->
+                <service name="InterceptorChainList"
+                         code="jp.ossc.nimbus.service.aop.DefaultInterceptorChainListService">
+                    <attribute name="InterceptorServiceNames">
+                        #TraceLoggingInterceptor
+                    </attribute>
+                    <depends>
+                        <!-- トレースロギングインターセプタサービス -->
+                        <service name="TraceLoggingInterceptor"
+                                 code="jp.ossc.nimbus.service.aop.interceptor.TraceLoggingInterceptorService">
+                            <attribute name="OutputTarget">true</attribute>
+                            <attribute name="OutputTargetProperties">FlowName</attribute>
+                            <attribute name="OutputMethod">false</attribute>
+                            <attribute name="OutputParameter">true</attribute>
+                            <attribute name="OutputParameterProperties">[0]</attribute>
+                            <attribute name="OutputResponseLog">true</attribute>
+                        </service>
+                    </depends>
+                </service>
+            </depends>
+        </service>
+        
+        <!-- 並列リクエスト用のスレッドを管理するQueueHandlerContainerサービス -->
+        <service name="QueueHandlerContainer"
+                 code="jp.ossc.nimbus.service.queue.QueueHandlerContainerService">
+            <attribute name="QueueServiceName">#RequestQueue</attribute>
+            <attribute name="QueueHandlerSize">10</attribute>
+            <depends>
+                <!-- 並列リクエストを受け付けるQueueサービス -->
+                <service name="RequestQueue"
+                         code="jp.ossc.nimbus.service.queue.DefaultQueueService"/>
+            </depends>
+        </service>
+    </manager>
+    
+</server>

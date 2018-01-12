@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE flows PUBLIC
+  "-//Nimbus//DTD Nimbus Bean Flow 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/beanflow_1_0.dtd">
+
+<flows>
+    
+    <!-- 入力データ
+         戻り値：DataSet
+    -->
+    <flow name="common/request">
+        
+        <step>
+            <target><object code="jp.ossc.nimbus.beans.dataset.DataSet"/></target>
+            <attribute name="HeaderSchema(Common)">
+                :id,java.lang.String,,,value != null and @value.length@ != 0
+                :ticket,java.lang.String,,,value != null and @value.length@ != 0
+            </attribute>
+            <result><this/></result>
+        </step>
+    </flow>
+    
+    <!-- 出力データ
+         引数：BeanFlowServletContext
+         戻り値：DataSet
+    -->
+    <flow name="common/response">
+        
+        <step name="DataSet">
+            <target><object code="jp.ossc.nimbus.beans.dataset.DataSet"/></target>
+            <attribute name="HeaderSchema(Common)">
+                :id,java.lang.String
+                :ticket,java.lang.String
+                :message,java.lang.String
+            </attribute>
+            <attribute name="Header(Common).id"><input>Input.Header(Common).id</input></attribute>
+            <attribute name="Header(Common).ticket"><input>Input.Header(Common).ticket</input></attribute>
+            <result><this/></result>
+        </step>
+        
+        <step>
+            <target><input/></target>
+            <attribute name="Output"><step-ref>DataSet</step-ref></attribute>
+            <result><step-ref>DataSet</step-ref></result>
+        </step>
+        
+    </flow>
+    
+    <!-- 転送フロー
+         引数1：BeanFlowServletContext
+         引数2：転送先のURI
+         戻り値：なし
+    -->
+    <flow name="forward">
+        
+        <!-- ServletRequestの"output"属性に、出力Beanを設定 -->
+        <step>
+            <target><input>[0].Request</input></target>
+            <attribute name="Attribute(output)"><input>[0].Output</input></attribute>
+        </step>
+        
+        <!-- RequestDispatcherを取得 -->
+        <step name="RequestDispatcher">
+            <target><input>[0].Request</input></target>
+            <result>
+                <invoke name="getRequestDispatcher">
+                    <argument type="java.lang.String"><input>[1]</input></argument>
+                </invoke>
+            </result>
+        </step>
+        
+        <!-- 転送先のURIへ転送 -->
+        <step>
+            <target><step-ref>RequestDispatcher</step-ref></target>
+            <invoke name="forward">
+                <argument type="javax.servlet.ServletRequest"><input>[0].Request</input></argument>
+                <argument type="javax.servlet.ServletResponse"><input>[0].Response</input></argument>
+            </invoke>
+        </step>
+    </flow>
+    
+</flows>

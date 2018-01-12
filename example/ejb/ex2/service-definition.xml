@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- 特定のEJB参照を取得するEJBFactoryサービス-->
+        <service name="EJBFactory"
+                 code="jp.ossc.nimbus.service.ejb.UnitEJBFactoryService">
+            
+            <!-- EJB Homeインタフェースを設定する -->
+            <attribute name="HomeType">sample.ejb.MessengerHome</attribute>
+            
+            <!-- EJB Remoteインタフェースを設定する -->
+            <attribute name="RemoteType">sample.ejb.Messenger</attribute>
+            
+            <!-- EJB createメソッドの引数の型を設定する -->
+            <attribute name="CreateMethodParamTypes">java.lang.String</attribute>
+            
+            <attribute name="JndiFinderServiceName">#JndiFinder</attribute>
+            <depends>
+                <!-- JNDIからlookupするJndiFinderサービス -->
+                <service name="JndiFinder"
+                         code="jp.ossc.nimbus.service.jndi.CachedJndiFinderService">
+                    <attribute name="Environment">
+                        java.naming.factory.initial=org.jnp.interfaces.NamingContextFactory
+                        java.naming.factory.url.pkgs=org.jboss.naming:org.jnp.interfaces
+                        java.naming.provider.url=localhost:1099
+                    </attribute>
+                    <attribute name="Prefix">sample/</attribute>
+                    <attribute name="CacheMapServiceName">#JndiCache</attribute>
+                    <depends>
+                        <!-- メモリ中にキャッシュするCacheMapサービス -->
+                        <service name="JndiCache"
+                                 code="jp.ossc.nimbus.service.cache.MemoryCacheMapService"/>
+                    </depends>
+                </service>
+            </depends>
+        </service>
+        
+    </manager>
+    
+</server>

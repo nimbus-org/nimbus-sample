@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="true"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager shutdown-hook="true">
+        
+        <!-- サーバサービス -->
+        <service name="Server"
+                 code="jp.ossc.nimbus.service.server.DefaultServerService">
+            
+            <!-- 待ち受けポート番号を設定する -->
+            <attribute name="Port">10000</attribute>
+            
+            <!-- 要求を非同期処理するQueueHandlerContainerサービスのサービス名を設定する -->
+            <attribute name="QueueHandlerContainerServiceName">#RequestQueueHandlerContainer</attribute>
+            
+            <!-- リクエストIDを発行するSequenceサービスのサービス名を設定する -->
+            <attribute name="SequenceServiceName">#Sequence</attribute>
+            
+            <!-- リクエストの実装クラスを設定する -->
+            <attribute name="RequestClass">jp.ossc.nimbus.service.server.ActionRequest</attribute>
+            
+            <!-- レスポンスの実装クラスを設定する -->
+            <attribute name="ResponseClass">jp.ossc.nimbus.service.server.StatusResponse</attribute>
+            
+            <depends>RequestQueueHandlerContainer</depends>
+            
+            <depends>Sequence</depends>
+            
+        </service>
+        
+        <!-- 要求を非同期処理するQueueHandlerContainerサービス -->
+        <service name="RequestQueueHandlerContainer"
+                 code="jp.ossc.nimbus.service.queue.QueueHandlerContainerService">
+            
+            <!-- 要求を処理するスレッド数を設定する -->
+            <attribute name="QueueHandlerSize">5</attribute>
+            
+            <!-- 要求を処理するQueueHandlerサービスのサービス名を設定する -->
+            <attribute name="QueueHandlerServiceName">#BeanFlowInvokerCallQueueHandler</attribute>
+            
+            <depends>BeanFlowInvokerCallQueueHandler</depends>
+            
+        </service>
+        
+        <!-- 要求を処理するQueueHandlerサービス -->
+        <service name="BeanFlowInvokerCallQueueHandler"
+                 code="jp.ossc.nimbus.service.server.BeanFlowInvokerCallQueueHandlerService">
+            
+            <!-- 要求を処理するBeanFlowInvokerFactoryサービスのサービス名を設定する -->
+            <attribute name="BeanFlowInvokerFactoryServiceName">#BeanFlowInvokerFactory</attribute>
+            
+            <!-- 要求の入力ストリームを要求オブジェクトに変換するStreamConverterサービスのサービス名を設定する -->
+            <attribute name="RequestStreamConverterServiceName">#DataSetJSONConverter</attribute>
+            
+            <!-- 応答オブジェクトを応答の入力ストリームに変換するStreamConverterサービスのサービス名を設定する -->
+            <attribute name="ResponseStreamConverterServiceName">#DataSetJSONConverter</attribute>
+            
+            <!-- ジャーナルを出力するJournalサービスのサービス名を設定する -->
+            <attribute name="JournalServiceName">#AccessJournal</attribute>
+            
+            <!-- リトライ回数を越えてもエラーが発生する場合に出力するエラーログのメッセージIDを設定する -->
+            <attribute name="RetryOverErrorLogMessageId">FATAL</attribute>
+            
+            <depends>BeanFlowInvokerFactory</depends>
+            
+            <depends>DataSetJSONConverter</depends>
+            
+            <depends>AccessJournal</depends>
+            
+        </service>
+        
+        <!-- DataSet⇔JSONの相互変換を行うStreamConverterサービス -->
+        <service name="DataSetJSONConverter"
+                 code="jp.ossc.nimbus.util.converter.DataSetJSONConverter">
+            <attribute name="OutputSchema">false</attribute>
+        </service>
+        
+        <!-- BeanFlowInvokerを生成するBeanFlowInvokerFactoryサービス -->
+        <service name="BeanFlowInvokerFactory"
+                 code="jp.ossc.nimbus.service.beancontrol.DefaultBeanFlowInvokerFactoryService">
+            <attribute name="DirPaths">flows</attribute>
+            <attribute name="BeanFlowInvokerAccessClass">jp.ossc.nimbus.service.beancontrol.BeanFlowInvokerAccessImpl2</attribute>
+            <attribute name="Validate">true</attribute>
+        </service>
+        
+        <!-- 通番を発番するSequenceサービス -->
+        <service name="Sequence"
+                 code="jp.ossc.nimbus.service.sequence.StringSequenceService">
+            <attribute name="Format">ID_;0,9;0,9;0,9;</attribute>
+        </service>
+
+<!--=======================================================================
+ジャーナルサービス
+========================================================================-->
+        <!-- アクセスジャーナル -->
+        <service name="AccessJournal"
+                 code="jp.ossc.nimbus.service.journal.ThreadManagedJournalService">
+            <attribute name="EditorFinderName">#AccessJournalEditorFinder</attribute>
+            <attribute name="WritableElementKey">Access</attribute>
+            <attribute name="CategoryServiceNames">#AccessJournalCategory</attribute>
+            <depends>AccessJournalEditorFinder</depends>
+            <depends>AccessJournalCategory</depends>
+        </service>
+        
+        <!-- アクセスジャーナルカテゴリ -->
+        <service name="AccessJournalCategory"
+                 code="jp.ossc.nimbus.service.writer.SimpleCategoryService">
+            <attribute name="MessageWriterServiceName">#AccessJournalWriter</attribute>
+            <attribute name="WritableRecordFactoryServiceName">#AccessJournalWritableRecordFactory</attribute>
+            <depends>AccessJournalWriter</depends>
+            <depends>AccessJournalWritableRecordFactory</depends>
+        </service>
+        
+        <!-- アクセスジャーナルのフォーマッタ -->
+        <service name="AccessJournalWritableRecordFactory"
+                 code="jp.ossc.nimbus.service.writer.PropertyWritableRecordFactoryService">
+            <attribute name="FormatKeyMapping">
+                DATE=Access.JournalRecords.Date[0]
+                REQUEST_ID=Access.RequestID
+                CLIENT={Access.JournalRecords.RemoteHost[0]}+':'+{Access.JournalRecords.RemotePort[0]}
+                ACTION=Access.JournalRecords.Action[0]
+                REQUEST_BODY=Access.JournalRecords.RequestBody[0]
+                RESPONSE_STATUS=Access.JournalRecords.Status[0]
+                RESPONSE_BODY=Access.JournalRecords.ResponseBody[0]
+                PERFORMANCE=Access.Performance
+            </attribute>
+            <attribute name="Format">""%DATE%","%REQUEST_ID%","%CLIENT%","%ACTION%","%REQUEST_BODY%","%RESPONSE_STATUS%","%RESPONSE_BODY%","%PERFORMANCE%""</attribute>
+            <attribute name="ImplementServiceNames">
+                DATE=#DateElement
+                REQUEST_BODY=#CSVElement
+                RESPONSE_BODY=#CSVElement
+            </attribute>
+            <depends>
+                <!-- Dateオブジェクトを日付文字列に変換するWritableElement -->
+                <service name="DateElement"
+                         code="jp.ossc.nimbus.service.writer.DateElement"
+                         instance="factory">
+                    <attribute name="Format">yyyy/MM/dd HH:mm:ss.SSS</attribute>
+                </service>
+            </depends>
+            <depends>
+                <!-- CSV要素としてエスケープするWritableElement -->
+                <service name="CSVElement"
+                         code="jp.ossc.nimbus.service.writer.SimpleElement"
+                         instance="factory">
+                    <attribute name="StringConverter">
+                        <object code="jp.ossc.nimbus.io.CSVWriter">
+                            <attribute name="Enclose">true</attribute>
+                            <attribute name="EscapeLineSeparatorInEnclosure">true</attribute>
+                        </object>
+                    </attribute>
+                </service>
+            </depends>
+        </service>
+        
+        <!-- アクセスジャーナル書き込みサービス -->
+        <service name="AccessJournalWriter"
+                 code="jp.ossc.nimbus.service.writer.ConsoleWriterService"/>
+        
+        <!-- アクセスジャーナルに必要な型に対応するJournalEditorサービスを検索するEditorFinderサービス -->
+        <service name="AccessJournalEditorFinder"
+                 code="jp.ossc.nimbus.service.journal.editorfinder.ObjectMappedEditorFinderService">
+            <attribute name="EditorProperties">
+                java.lang.Object=#ObjectJournalEditor
+                byte[]=#ByteArrayJournalEditor
+                jp.ossc.nimbus.service.journal.RequestJournal=#RequestJournalEditor
+            </attribute>
+            <depends>ObjectJournalEditor</depends>
+            <depends>ByteArrayJournalEditor</depends>
+            <depends>RequestJournalEditor</depends>
+        </service>
+        
+        <!-- RequestJournalオブジェクトをMapに編集するJournalEditorサービス -->
+        <service name="RequestJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.SimpleRequestMapJournalEditorService">
+            <attribute name="OutputRequestId">true</attribute>
+            <attribute name="OutputStartTime">false</attribute>
+            <attribute name="OutputRecords">true</attribute>
+            <attribute name="OutputEndTime">false</attribute>
+            <attribute name="OutputPerformance">true</attribute>
+        </service>
+        
+        <!-- 任意のオブジェクトをEditorFinderに委譲して編集するJournalEditorサービス -->
+        <service name="ObjectJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.MutableObjectJournalEditorService"/>
+        
+        <!-- バイト配列を文字列に編集するJournalEditorサービス -->
+        <service name="ByteArrayJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.ByteArrayJournalEditorService">
+            <attribute name="ConvertMode">UTF-8</attribute>
+        </service>
+        
+    </manager>
+    
+</server>

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE flows PUBLIC
+  "-//Nimbus//DTD Nimbus Bean Flow 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/beanflow_1_0.dtd">
+
+<flows>
+    
+<!--=======================================================================
+入出力データフロー
+========================================================================-->
+    
+    <!-- 入力データ
+         戻り値：DataSet
+    -->
+    <flow name="logout/request">
+        
+        <!--
+          DataSetServletRequestParameterConverterサービスがリクエストパス"/logout.bf"の
+          リクエストパラメータを格納するDataSetを取得するために呼び出すフロー名を別名
+          として持たせる。
+        -->
+        <alias name="dataset/logout"/>
+        
+        <callflow stepname="DataSet" name="common/request"/>
+        
+        <step>
+            <target><step-ref>DataSet</step-ref></target>
+            <attribute name="Name">logoutRequest</attribute>
+            <result><this/></result>
+        </step>
+    </flow>
+    
+    <!-- 出力データ
+         引数：BeanFlowServletContext
+         戻り値：DataSet
+    -->
+    <flow name="logout/response">
+        
+        <callflow stepname="DataSet" name="common/response">
+            <argument><input/></argument>
+        </callflow>
+        
+        <step>
+            <target><step-ref>DataSet</step-ref></target>
+            <attribute name="Name">logoutResponse</attribute>
+            <result><this/></result>
+        </step>
+        
+    </flow>
+    
+<!--=======================================================================
+アクション入力検証フロー
+========================================================================-->
+    
+    <!-- ログアウト入力検証フロー
+      なし
+    -->
+    
+<!--=======================================================================
+アクションフロー
+========================================================================-->
+    
+    <!-- 
+         引数：BeanFlowServletContext
+         転送先：/index.jsp
+    -->
+    <flow name="logout">
+        
+        <!--
+          BeanFlowServletがリクエストパス"/logout.bf"の業務処理を実行するために呼び出す
+          フロー名を別名として持たせる。
+        -->
+        <alias name="/logout"/>
+        
+        <!-- セッションを無効化する -->
+        <step>
+            <target><input>Request.Session</input></target>
+            <invoke name="invalidate"/>
+        </step>
+        
+        <!-- ログイン画面に転送 -->
+        <callflow name="forward">
+            <argument><input/></argument>
+            <argument>/index.jsp</argument>
+        </callflow>
+    </flow>
+</flows>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE flows PUBLIC
+  "-//Nimbus//DTD Nimbus Bean Flow 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/beanflow_1_0.dtd">
+
+<flows>
+    <flow name="Test">
+        
+        <for var="arg">
+            <target><input/></target>
+            
+            <!-- 非同期で子フローを呼び出す -->
+            <callflow name="AsynchTest" asynch="true" reply="true" factory="Nimbus#ServerBeanFlowInvokerFactory">
+                <argument><var>arg</var></argument>
+            </callflow>
+        </for>
+        
+        <step name="Result">
+            <result><object code="java.util.ArrayList"/></result>
+        </step>
+        
+        <for var="arg">
+            <target><input/></target>
+            
+            <!-- 非同期で呼び出した子フローの応答待ちをする -->
+            <reply name="TestResult" stepname="AsynchTest"/>
+            
+            <step>
+                <target><step-ref>Result</step-ref></target>
+                <invoke name="add">
+                    <argument type="java.lang.Object"><step-ref>TestResult</step-ref></argument>
+                </invoke>
+            </step>
+        </for>
+        <return><step-ref>Result</step-ref></return>
+    </flow>
+    
+    <!-- 非同期で呼び出されるフロー -->
+    <flow name="AsynchTest">
+        <step name="SleepTime">
+            <target>
+                <object code="java.util.Random">
+                    <constructor>
+                        <argument type="long"><input/></argument>
+                    </constructor>
+                </object>
+            </target>
+            <result>
+                <invoke name="nextInt">
+                    <argument type="int">5000</argument>
+                </invoke>
+            </result>
+        </step>
+        <step name="Message">
+            <target><object code="java.lang.StringBuffer"/></target>
+            <invoke name="append">
+                <argument type="int"><input/></argument>
+            </invoke>
+            <invoke name="append">
+                <argument>の処理を</argument>
+            </invoke>
+            <invoke name="append">
+                <argument type="int"><step-ref>SleepTime</step-ref></argument>
+            </invoke>
+            <invoke name="append">
+                <argument>[ms]スリープします。</argument>
+            </invoke>
+            <result><this/></result>
+        </step>
+        <step>
+            <target>
+                <static-invoke code="jp.ossc.nimbus.core.ServiceManagerFactory" name="getLogger"/>
+            </target>
+            <invoke name="write">
+                <argument type="java.lang.String">INFO</argument>
+                <argument type="java.lang.Object"><step-ref>Message</step-ref></argument>
+            </invoke>
+        </step>
+        <step>
+            <static-invoke code="java.lang.Thread" name="sleep">
+                <argument type="long"><step-ref>SleepTime</step-ref></argument>
+            </static-invoke>
+            <result><input/></result>
+        </step>
+    </flow>
+</flows>

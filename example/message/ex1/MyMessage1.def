@@ -1,0 +1,4 @@
+MSG_001,Good morning!
+MSG_002,Good afternoon\\, @0!
+MSG_003,Good evening\\, @0 and @1!
+MSG_004,Good night\\, #0 and @1!

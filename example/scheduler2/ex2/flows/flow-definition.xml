@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE flows PUBLIC
+  "-//Nimbus//DTD Nimbus Bean Flow 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/beanflow_1_0.dtd">
+
+<flows>
+    
+    <flow name="Flow1">
+        <step>
+            <target>
+                <static-invoke code="jp.ossc.nimbus.core.ServiceManagerFactory" name="getLogger"/>
+            </target>
+            <invoke name="write">
+                <argument>INFO</argument>
+                <argument type="java.lang.Object" valueType="java.lang.String">Flow1が呼ばれました。</argument>
+            </invoke>
+        </step>
+        <step>
+            <static-invoke code="java.lang.Thread" name="sleep">
+                <argument type="long">10000</argument>
+            </static-invoke>
+            <result>正常終了</result>
+        </step>
+    </flow>
+    
+    <flow name="Flow2">
+        <step name="Message">
+            <target><object code="java.lang.StringBuffer"/></target>
+            <invoke name="append">
+                <argument type="java.lang.String">Flow2が呼ばれました。</argument>
+            </invoke>
+            <invoke name="append">
+                <argument type="java.lang.Object"><input>Input</input></argument>
+            </invoke>
+            <result><this/></result>
+        </step>
+        <step>
+            <target>
+                <static-invoke code="jp.ossc.nimbus.core.ServiceManagerFactory" name="getLogger"/>
+            </target>
+            <invoke name="write">
+                <argument>INFO</argument>
+                <argument type="java.lang.Object"><step-ref>Message</step-ref></argument>
+            </invoke>
+        </step>
+        <step>
+            <static-invoke code="java.lang.Thread" name="sleep">
+                <argument type="long">5000</argument>
+            </static-invoke>
+            <result>正常終了</result>
+        </step>
+    </flow>
+    
+    <flow name="Flow3">
+        <step>
+            <target>
+                <static-invoke code="jp.ossc.nimbus.core.ServiceManagerFactory" name="getLogger"/>
+            </target>
+            <invoke name="write">
+                <argument>INFO</argument>
+                <argument type="java.lang.Object" valueType="java.lang.String">Flow3が呼ばれました。</argument>
+            </invoke>
+            <result>正常終了</result>
+        </step>
+<!--
+-->
+        <step>
+            <attribute name="State"><static-field-ref code="jp.ossc.nimbus.service.scheduler2.Schedule" name="STATE_FAILED"/></attribute>
+            <attribute name="Output">異常終了</attribute>
+            <result><input/></result>
+        </step>
+    </flow>
+    
+    <flow name="Flow4">
+        <step>
+            <target>
+                <static-invoke code="jp.ossc.nimbus.core.ServiceManagerFactory" name="getLogger"/>
+            </target>
+            <invoke name="write">
+                <argument>INFO</argument>
+                <argument type="java.lang.Object" valueType="java.lang.String">Flow4が呼ばれました。</argument>
+            </invoke>
+        </step>
+        <step>
+            <attribute name="Retry">true</attribute>
+            <result><input/></result>
+        </step>
+    </flow>
+    
+</flows>

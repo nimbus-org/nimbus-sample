@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <manager>
+        
+        <!-- サービスの登録先となるRepositoryサービスのサービス名を設定する -->
+        <repository>ServiceRepository</repository>
+        
+        <!-- サービスをJMXサーバに登録するRepositoryサービス -->
+        <service name="ServiceRepository"
+                 code="jp.ossc.nimbus.service.repository.MBeanServerRepositoryService"/>
+        
+        <!-- MBeanでないPOJOサービス -->
+        <service name="Service1"
+                 code="sample.service.POJOService"/>
+        
+        <!-- MBeanのPOJOサービス -->
+        <service name="Service2"
+                 code="sample.service.POJOService2">
+            <attribute name="Message">Hello!</attribute>
+        </service>
+        
+    </manager>
+    
+</server>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- JNDIからlookupするJndiFinderサービス -->
+        <service name="JndiFinder"
+                 code="jp.ossc.nimbus.service.jndi.CachedJndiFinderService">
+            
+            <!-- InitialContextの初期化プロパティを設定する -->
+            <attribute name="Environment">
+                java.naming.factory.initial=org.jnp.interfaces.NamingContextFactory
+                java.naming.factory.url.pkgs=org.jboss.naming:org.jnp.interfaces
+                java.naming.provider.url=localhost:1099
+            </attribute>
+            
+            <!-- lookupするJNDI名のプレフィクスを設定する -->
+            <attribute name="Prefix">sample/</attribute>
+            
+        </service>
+        
+    </manager>
+    
+</server>

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- ログ出力を行うLoggerサービス -->
+        <service name="Log"
+                 code="jp.ossc.nimbus.service.log.LogService">
+            
+            <attribute name="MessageRecordFactoryServiceName">#MyMessageRecordFactory</attribute>
+            
+            <!-- ログ出力先となるCategoryサービスのサービス名を設定する -->
+            <attribute name="CategoryServiceNames">
+                #ConsoleCategory
+                #FileCategory
+            </attribute>
+            
+            <depends>
+                <service name="MyMessageRecordFactory"
+                         code="jp.ossc.nimbus.service.message.MessageRecordFactoryService">
+                    <attribute name="MessageRecordClassName">jp.ossc.nimbus.service.log.LogMessageRecordImpl</attribute>
+                    <attribute name="MessageFiles">MyMessage1</attribute>
+                    <attribute name="SecretMode">true</attribute>
+                </service>
+            </depends>
+            
+            <depends>
+                <!-- コンソールへのログ出力先となるCategoryサービス -->
+                <service name="ConsoleCategory"
+                         code="jp.ossc.nimbus.service.log.SimpleCategoryService">
+                    <attribute name="CategoryName">Console</attribute>
+                    <attribute name="PriorityRange">0:9</attribute>
+                    <attribute name="Labels">
+                        0:9=DEBUG
+                    </attribute>
+                    <attribute name="MessageWriterServiceName">#ConsoleMessageWriter</attribute>
+                    <attribute name="WritableRecordFactoryServiceName">#ConsoleWritableRecordFactory</attribute>
+                    <depends>
+                        <service name="ConsoleMessageWriter"
+                                 code="jp.ossc.nimbus.service.writer.ConsoleWriterService"/>
+                    </depends>
+                    <depends>
+                        <service name="ConsoleWritableRecordFactory"
+                                 code="jp.ossc.nimbus.service.log.LogWritableRecordFactoryService">
+                            <attribute name="Format">[%CODE%,%PRIORITY%]%MESSAGE%</attribute>
+                            <attribute name="DateFormat">yyyy/MM/dd HH:mm:ss</attribute>
+                        </service>
+                    </depends>
+                </service>
+            </depends>
+            
+            <depends>
+                <!-- ファイルへのログ出力先となるCategoryサービス -->
+                <service name="FileCategory"
+                         code="jp.ossc.nimbus.service.log.SimpleCategoryService">
+                    <attribute name="CategoryName">File</attribute>
+                    <attribute name="PriorityRange">10:49</attribute>
+                    <attribute name="Labels">
+                        10:19=INFO
+                        20:29=WARN
+                        30:39=ERROR
+                        40:49=FATAL
+                    </attribute>
+                    <attribute name="MessageWriterServiceName">#FileMessageWriter</attribute>
+                    <attribute name="WritableRecordFactoryServiceName">#FileWritableRecordFactory</attribute>
+                    <depends>
+                        <service name="FileMessageWriter"
+                                 code="jp.ossc.nimbus.service.writer.log4j.FileAppenderWriterService">
+                            <attribute name="File">default.log</attribute>
+                            <attribute name="ImmediateFlush">true</attribute>
+                            <attribute name="Encoding">Windows-31J</attribute>
+                            <attribute name="Append">false</attribute>
+                        </service>
+                    </depends>
+                    <depends>
+                        <service name="FileWritableRecordFactory"
+                                 code="jp.ossc.nimbus.service.log.LogWritableRecordFactoryService">
+                            <attribute name="Format">[%DATE%][%PRIORITY%][%CODE%] %MESSAGE%</attribute>
+                            <attribute name="DateFormat">yyyy/MM/dd HH:mm:ss</attribute>
+                        </service>
+                    </depends>
+                </service>
+            </depends>
+        </service>
+        
+    </manager>
+    
+</server>

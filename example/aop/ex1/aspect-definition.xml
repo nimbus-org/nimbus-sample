@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- アスペクト対象と、アスペクトで挟み込むインタセプタを定義するAspectTranslatorサービス -->
+        <service name="SampleAspect"
+                 code="jp.ossc.nimbus.service.aop.javassist.MethodInterceptorAspectService">
+            
+            <!-- アスペクト対象となるクラスのクラス名を完全修飾クラス名で指定する。
+              クラス名は、java.util.regexの正規表現で指定する。
+            -->
+            <attribute name="TargetClassName">sample\.service\.POJOService</attribute>
+            
+            <!-- アスペクト対象となるメソッド名を指定する。
+              メソッド名は、java.util.regexの正規表現で指定する。
+            -->
+            <attribute name="TargetMethodName">getMessage2</attribute>
+            
+            <!-- アスペクトで挟み込むインタセプタを連ねるInterceptorChainListサービスのサービス名を指定する。
+              静的アスペクトの場合は、このアスペクト定義ファイルには、InterceptorChainListサービス自体は定義する必要はない。
+            -->
+            <attribute name="InterceptorChainListServiceName">#SampleInterceptorChainList</attribute>
+            
+            <!-- アスペクトで挟み込むインタセプタの最後に呼び出すInvokerサービスのサービス名を指定する。
+              静的アスペクトの場合は、このアスペクト定義ファイルには、Invokerサービス自体は定義する必要はない。
+            -->
+            <attribute name="InvokerServiceName">#SampleInvoker</attribute>
+            
+            <!-- 静的コンパイルに使用する事を設定する -->
+            <attribute name="StaticCompile">true</attribute>
+        </service>
+        
+    </manager>
+    
+</server>

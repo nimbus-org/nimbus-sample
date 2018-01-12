@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE testRunner PUBLIC
+  "-//Nimbus//DTD Nimbus Test Runner 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/testrunner_1_0.dtd">
+
+<testRunner>
+    
+    <include>
+        <scenarioGroup id="Group1"/>
+    </include>
+    
+    <reporter>TestReporter</reporter>
+    <reporter>CSVTestReporter</reporter>
+    
+</testRunner>

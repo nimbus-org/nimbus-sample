@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- BeanFlowInvokerを生成するBeanFlowInvokerFactoryサービス -->
+        <service name="BeanFlowInvokerFactory"
+                 code="jp.ossc.nimbus.service.beancontrol.DefaultBeanFlowInvokerFactoryService">
+            
+            <!-- 業務フロー定義ファイルを格納しているディレクトリを設定する -->
+            <attribute name="DirPaths">flows</attribute>
+            
+            <!-- BeanFlowInvokerAccessインタフェースの実装クラスを設定する -->
+            <attribute name="BeanFlowInvokerAccessClass">jp.ossc.nimbus.service.beancontrol.BeanFlowInvokerAccessImpl2</attribute>
+            
+            <!-- 業務フロー定義ファイルの検証を行うかを設定する -->
+            <attribute name="Validate">true</attribute>
+            
+            <depends>JDBCTransactionResourceFactory</depends>
+        </service>
+        
+        <!-- JDBC接続のTransactionResourceを生成するResourceFactoryサービス -->
+        <service name="JDBCTransactionResourceFactory"
+                 code="jp.ossc.nimbus.service.resource.datasource.JdbcConnectionFactoryService">
+            <attribute name="ConnectionFactoryServiceName">#ConnectionFactory</attribute>
+            <depends>
+                <!-- JDBCドライバ経由でConnectionを取得するConnectionFactoryサービス -->
+                <service name="ConnectionFactory"
+                         code="jp.ossc.nimbus.service.connection.JDBCConnectionFactoryService">
+                    <attribute name="DriverName">org.hsqldb.jdbcDriver</attribute>
+                    <attribute name="ConnectionURL">jdbc:hsqldb:./localDB</attribute>
+                    <attribute name="UserName">sa</attribute>
+                    <attribute name="Password"></attribute>
+                    <attribute name="AutoCommit">false</attribute>
+                </service>
+            </depends>
+        </service>
+        
+        <service name="BeanFlowCoverageRepoterService"
+                 code="jp.ossc.nimbus.service.beancontrol.ConsoleBeanFlowCoverageRepoterService">
+            <attribute name="BeanFlowInvokerFactoryServiceName">#BeanFlowInvokerFactory</attribute>
+            <attribute name="ReportOnStop">true</attribute>
+            <depends>BeanFlowInvokerFactory</depends>
+        </service>
+        
+    </manager>
+    
+</server>

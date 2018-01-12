@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- BeanFlowInvokerを生成するBeanFlowInvokerFactoryサービス -->
+        <service name="BeanFlowInvokerFactory"
+                 code="jp.ossc.nimbus.service.beancontrol.DefaultBeanFlowInvokerFactoryService">
+            
+            <!-- 業務フロー定義ファイルを格納しているディレクトリを設定する -->
+            <attribute name="DirPaths">flows</attribute>
+            
+            <!-- BeanFlowInvokerAccessインタフェースの実装クラスを設定する -->
+            <attribute name="BeanFlowInvokerAccessClass">jp.ossc.nimbus.service.beancontrol.BeanFlowInvokerAccessImpl2</attribute>
+            
+            <!-- 業務フロー定義ファイルの検証を行うかを設定する -->
+            <attribute name="Validate">true</attribute>
+            
+            <!-- Journalサービスのサービス名を設定する -->
+            <attribute name="JournalServiceName">#Journal</attribute>
+            
+            <!-- InterceptorChainFactoryサービスのサービス名を設定する -->
+            <attribute name="InterceptorChainFactoryServiceName">#InterceptorChainFactory</attribute>
+            
+            <!-- Contextサービスのサービス名を設定する -->
+            <attribute name="ThreadContextServiceName">#ThreadContext</attribute>
+            
+            <depends>#Journal</depends>
+            
+            <depends>#InterceptorChainFactory</depends>
+            
+            <depends>#ThreadContext</depends>
+            
+        </service>
+        
+        <!-- InterceptorChainを提供するInterceptorChainFactoryサービス -->
+        <service name="InterceptorChainFactory"
+                 code="jp.ossc.nimbus.service.aop.DefaultInterceptorChainFactoryService">
+            
+            <!-- 正規表現を有効にするかどうかを設定する -->
+            <attribute name="RegexEnabled">true</attribute>
+            
+            <!-- キーとInterceptorのマッピングを設定する -->
+            <attribute name="InterceptorMapping">
+                Public-.*=ThreadContextInitializeInterceptor
+            </attribute>
+             
+            <depends>
+                
+                <!-- スレッドコンテキストを初期化するInterceptorサービス -->
+                <service name="ThreadContextInitializeInterceptor"
+                         code="jp.ossc.nimbus.service.aop.interceptor.ThreadContextInitializeInterceptorService">
+                    
+                    <!-- Contextサービスのサービス名を設定する -->
+                    <attribute name="ThreadContextServiceName">#ThreadContext</attribute>
+                    
+                    <!-- Sequenceサービスのサービス名を設定する -->
+                    <attribute name="SequenceServiceName">#Sequence</attribute>
+                    
+                    <depends>#ThreadContext</depends>
+                    
+                    <depends>
+                        <!-- 通番を発番するSequenceサービス -->
+                        <service name="Sequence"
+                                 code="jp.ossc.nimbus.service.sequence.StringSequenceService">
+                            <attribute name="format">ID_;0,9;0,9;0,9;0,9;0,9;0,9;0,9</attribute>
+                        </service>
+                    </depends>
+                    
+                </service>
+                
+            </depends>
+            
+        </service>
+        
+        <!-- コンテキスト情報を格納するContextサービス -->
+        <service name="ThreadContext"
+                 code="jp.ossc.nimbus.service.context.ThreadContextService"/>
+        
+        <!-- コンテキスト情報を格納するContextサービス -->
+        <service name="Context"
+                 code="jp.ossc.nimbus.service.context.DefaultContextService"/>
+        
+        <!-- ジャーナルサービス
+          以下は、全てジャーナルサービスに関連するサービス定義であるが、
+          説明は、ここでは省略する。
+        -->
+        <service name="Journal"
+                 code="jp.ossc.nimbus.service.journal.ThreadManagedJournalService">
+            <attribute name="EditorFinderName">#JournalEditorFinder</attribute>
+            <attribute name="WritableElementKey">Journal for Sample</attribute>
+            <attribute name="CategoryServiceNames">#JournalCategory</attribute>
+            <depends>JournalEditorFinder</depends>
+            <depends>JournalCategory</depends>
+        </service>
+        
+        <service name="JournalCategory"
+                 code="jp.ossc.nimbus.service.writer.SimpleCategoryService">
+            <attribute name="MessageWriterServiceName">#JournalWriter</attribute>
+            <attribute name="WritableRecordFactoryServiceName">#JournalWritableRecordFactory</attribute>
+            <depends>JournalWriter</depends>
+            <depends>JournalWritableRecordFactory</depends>
+        </service>
+        
+        <service name="JournalWritableRecordFactory"
+                 code="jp.ossc.nimbus.service.writer.WritableRecordFactoryService">
+            <attribute name="Format">%Journal for Sample%</attribute>
+        </service>
+         
+        <service name="JournalWriter"
+                 code="jp.ossc.nimbus.service.writer.OneWriteFileMessageWriterService">
+            <attribute name="File">journal.log</attribute>
+            <attribute name="Append">true</attribute>
+        </service>
+        
+        <service name="JournalEditorFinder"
+                 code="jp.ossc.nimbus.service.journal.editorfinder.ObjectMappedEditorFinderService">
+            <attribute name="EditorProperties">
+                java.lang.Object=#ObjectJournalEditor
+                java.lang.Class=#ClassJournalEditor
+                java.util.Date=#DateJournalEditor
+                jp.ossc.nimbus.service.journal.RequestJournal,Flow=#FlowRequestJournalEditor
+                jp.ossc.nimbus.service.journal.RequestJournal=#RequestJournalEditor
+            </attribute>
+            <depends>ObjectJournalEditor</depends>
+            <depends>ClassJournalEditor</depends>
+            <depends>DateJournalEditor</depends>
+            <depends>FlowRequestJournalEditor</depends>
+            <depends>RequestJournalEditor</depends>
+        </service>
+        
+        <service name="ObjectJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.ObjectJournalEditorService"/>
+        
+        <service name="ClassJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.ClassJournalEditorService">
+            <attribute name="ShortClassName">true</attribute>
+        </service>
+        
+        <service name="DateJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.DateJournalEditorService">
+            <attribute name="Format">yyyy/MM/dd HH:mm:ss.SSS</attribute>
+        </service>
+        
+        <service name="FlowRequestJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.SimpleRequestJournalEditorService"/>
+        
+        <service name="RequestJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.SimpleRequestJournalEditorService">
+            <attribute name="OutputRequestId">false</attribute>
+            <attribute name="OutputStartTime">false</attribute>
+            <attribute name="OutputEndTime">false</attribute>
+        </service>
+        
+    </manager>
+    
+</server>

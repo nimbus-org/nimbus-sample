@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- アスペクト対象と、アスペクトで挟み込むインタセプタを定義するAspectTranslatorサービス -->
+        <service name="SampleAspect"
+                 code="jp.ossc.nimbus.service.aop.javassist.MethodInterceptorAspectService">
+            <attribute name="TargetClassName">sample\.service\.POJOService</attribute>
+            <attribute name="TargetMethodName">getMessage2</attribute>
+            <attribute name="InterceptorChainListServiceName">#SampleInterceptorChainList</attribute>
+        </service>
+        
+        <!-- アスペクトで挟み込むInterceptorChainListサービス -->
+        <service name="SampleInterceptorChainList"
+                 code="jp.ossc.nimbus.service.aop.DefaultInterceptorChainListService">
+            <attribute name="InterceptorServiceNames">
+                #ExceptionConsumeInterceptor
+                #ExceptionWrapInterceptor
+                #ExceptionHandlingInterceptor
+                #ExceptionThrowInterceptor
+            </attribute>
+            
+            <depends>
+                
+                <!-- 例外を握りつぶすInterceptorサービス -->
+                <service name="ExceptionConsumeInterceptor"
+                         code="jp.ossc.nimbus.service.aop.interceptor.ExceptionConsumeInterceptorService">
+                    
+                    <!-- 握り潰す例外クラス名を指定する -->
+                    <attribute name="ExceptionClassNames">java.lang.UnsupportedOperationException</attribute>
+                    
+                    <!-- 例外を握り潰した時にメソッドの戻り値として返す戻り値を設定する -->
+                    <attribute name="ReturnValue">Good night.</attribute>
+                    
+                    <!-- 例外を握り潰した時にログを出力するログサービス名を設定する -->
+                    <attribute name="LoggerServiceName">#Log</attribute>
+                    
+                    <!-- 例外を握り潰した時にログに出力するメッセージコードを設定する -->
+                    <attribute name="LoggerMessageCode">ASPECT_002</attribute>
+                    
+                    
+                    <!-- 例外を握り潰した時にログに例外を出力するかどうかを設定する -->
+                    <attribute name="LoggingException">true</attribute>
+                    
+                    <depends>#Log</depends>
+                    
+                </service>
+                
+            </depends>
+            
+            <depends>
+                
+                <!-- throwされた例外をラップするInterceptorサービス -->
+                <service name="ExceptionWrapInterceptor"
+                         code="jp.ossc.nimbus.service.aop.interceptor.ExceptionWrapInterceptorService">
+                    
+                    <!-- ラップ対象の例外とラップする例外のマッピングを設定する -->
+                    <attribute name="WrapExceptionMapping">
+                        java.lang.IllegalArgumentException=java.lang.UnsupportedOperationException
+                    </attribute>
+                    
+                    <!-- throwする例外のメッセージを設定する -->
+                    <attribute name="Message">ラップテスト</attribute>
+                    
+                </service>
+                
+            </depends>
+            
+            <depends>
+                
+                <!-- 例外をハンドリングするExceptionHandlerへの振り分けを行うInterceptorサービス -->
+                <service name="ExceptionHandlingInterceptor"
+                         code="jp.ossc.nimbus.service.aop.interceptor.ExceptionHandlingInterceptorService">
+                    
+                    <!-- 例外とExceptionHandlerサービスのサービス名をマッピングする -->
+                    <attribute name="ExceptionAndHandlerMapping">
+                        java.lang.IllegalArgumentException=#IllegalArgumentExceptionHandler
+                    </attribute>
+                    
+                    <depends>
+                        
+                        <!-- 例外をハンドリングするExceptionHandlerサービス -->
+                        <service name="IllegalArgumentExceptionHandler"
+                                 code="jp.ossc.nimbus.service.aop.interceptor.DefaultExceptionHandlerService">
+                            
+                            <!-- ログを出力するログサービス名を設定する -->
+                            <attribute name="SystemLoggerServiceName">#Log</attribute>
+                            
+                            <!-- 出力するログのメッセージIDを設定する -->
+                            <attribute name="LogMessageCode">ASPECT_001</attribute>
+                            
+                            <!-- 例外をそのままthrowするように設定する -->
+                            <attribute name="ThrowException">true</attribute>
+                            
+                        </service>
+                    </depends>
+                    
+                </service>
+                
+            </depends>
+            
+            <depends>
+                
+                <!-- 例外をthrowするInterceptorサービス -->
+                <service name="ExceptionThrowInterceptor"
+                         code="jp.ossc.nimbus.service.aop.interceptor.ExceptionThrowInterceptorService">
+                    
+                    <!-- throwする例外クラスを設定する -->
+                    <attribute name="ExceptionClassName">java.lang.IllegalArgumentException</attribute>
+                    
+                    <!-- throwする例外のメッセージを設定する -->
+                    <attribute name="Message">Throwテスト</attribute>
+                    
+                </service>
+                
+            </depends>
+            
+        </service>
+        
+        <!-- ログ出力を行うLoggerサービス -->
+        <service name="Log"
+                 code="jp.ossc.nimbus.service.log.LogService">
+            
+            <attribute name="DebugEnabled">false</attribute>
+            <attribute name="SystemDebugEnabled">false</attribute>
+            <attribute name="SystemInfoEnabled">false</attribute>
+            <attribute name="SystemWarnEnabled">true</attribute>
+            <attribute name="SystemErrorEnabled">true</attribute>
+            <attribute name="SystemFatalEnabled">true</attribute>
+            <attribute name="MessageRecordFactoryServiceName">#MyMessageRecordFactory</attribute>
+            <depends>
+                <service name="MyMessageRecordFactory"
+                         code="jp.ossc.nimbus.service.message.MessageRecordFactoryService">
+                    <attribute name="MessageRecordClassName">jp.ossc.nimbus.service.log.LogMessageRecordImpl</attribute>
+                    <attribute name="MessageFiles">MyMessage1</attribute>
+                </service>
+            </depends>
+        </service>
+        
+    </manager>
+    
+</server>

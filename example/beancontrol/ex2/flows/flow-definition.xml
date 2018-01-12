@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE flows PUBLIC
+  "-//Nimbus//DTD Nimbus Bean Flow 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/beanflow_1_0.dtd">
+
+<flows>
+    
+    <!-- ユーザ一覧作成フロー -->
+    <flow name="Public-CreateUserMap">
+        
+        <!-- ユーザマップ生成ステップ -->
+        <step name="UserMap" journal="false">
+            <target>
+                <object code="java.util.HashMap"/>
+            </target>
+            <result>
+                <this/>
+            </result>
+        </step>
+        
+        <!-- ユーザ生成・登録ループ -->
+        <for index="i" end="10">
+            
+            <!-- ユーザ名生成ステップ -->
+            <step name="Name" journal="false">
+                <target>
+                    <object code="java.lang.StringBuffer"/>
+                </target>
+                <invoke name="append">
+                    <argument>user</argument>
+                </invoke>
+                <invoke name="append">
+                    <argument type="int">
+                        <var>i</var>
+                    </argument>
+                </invoke>
+                <result>
+                    <invoke name="toString"/>
+                </result>
+            </step>
+            
+            <!-- 年齢生成ステップ -->
+            <step name="Age" journal="false">
+                <target>
+                    <var>i</var>
+                </target>
+                <result>
+                    <expression>@this@ * 10</expression>
+                </result>
+            </step>
+            
+            <!-- 性別判断分岐 -->
+            <switch journal="false">
+                
+                <!-- ループインデックスが偶数のケース-->
+                <case test="@var(i)@ % 2 == 0">
+                    
+                    <!-- 性別生成ステップ -->
+                    <step name="Sex">
+                        <target>
+                            <object code="java.lang.String" journal="false">
+                                <constructor>
+                                    <argument>male</argument>
+                                </constructor>
+                            </object>
+                        </target>
+                        <result>
+                            <this/>
+                        </result>
+                    </step>
+                    
+                </case>
+                
+                <!-- ループインデックスが奇数のケース-->
+                <default>
+                    
+                    <!-- 性別生成ステップ -->
+                    <step name="Sex">
+                        <target>
+                            <object code="java.lang.String" journal="false">
+                                <constructor>
+                                    <argument>female</argument>
+                                </constructor>
+                            </object>
+                        </target>
+                        <result>
+                            <this/>
+                        </result>
+                    </step>
+                    
+                </default>
+                
+            </switch>
+            
+            <!-- ユーザ作成子フロー呼び出し -->
+            <callflow name="Private-CreateUser">
+                <argument>
+                    <step-ref>Name</step-ref>
+                </argument>
+                <argument>
+                    <step-ref>Age</step-ref>
+                </argument>
+                <argument>
+                    <step-ref>Sex</step-ref>
+                </argument>
+            </callflow>
+            
+            <!-- ユーザ登録ステップ -->
+            <step>
+                <target>
+                    <step-ref>UserMap</step-ref>
+                </target>
+                <invoke name="put">
+                    <argument type="java.lang.Object">
+                        <step-ref>Name</step-ref>
+                    </argument>
+                    <argument type="java.lang.Object">
+                        <step-ref>Private-CreateUser</step-ref>
+                    </argument>
+                </invoke>
+            </step>
+            
+        </for>
+        
+        <!-- ユーザ一覧登録ステップ -->
+        <step>
+            <target>
+                <service-ref>Context</service-ref>
+            </target>
+            <attribute name="UserMap">
+                <step-ref>UserMap</step-ref>
+            </attribute>
+        </step>
+        
+    </flow>
+    
+    <!--
+     ユーザ生成フロー
+     引数１ ユーザ名
+     引数２ 年齢
+     引数３ 性別
+    -->
+    <flow name="Private-CreateUser" journal="false">
+        
+        <!-- ユーザ生成ステップ -->
+        <step name="User">
+            <target>
+                <object code="java.util.HashMap"/>
+            </target>
+            <attribute name="name"><input>[0]</input></attribute>
+            <attribute name="age"><input>[1]</input></attribute>
+            <attribute name="sex"><input>[2]</input></attribute>
+            <result>
+                <this/>
+            </result>
+        </step>
+        
+    </flow>
+    
+    <!--
+     ユーザ取得フロー
+     引数１ ユーザ名
+    -->
+    <flow name="Public-GetUser">
+        
+        <!-- ユーザ一覧取得ステップ -->
+        <step name="UserMap">
+            <target>
+                <service-ref>Context</service-ref>
+            </target>
+            <result>
+                <invoke name="get">
+                    <argument type="java.lang.Object" valueType="java.lang.String">UserMap</argument>
+                </invoke>
+            </result>
+        </step>
+        
+        <!-- ユーザ一覧存在判定 -->
+        <if test="@UserMap@ != null">
+        
+            <!-- ユーザ取得ステップ -->
+            <step>
+                <target>
+                    <step-ref>UserMap</step-ref>
+                </target>
+                <result>
+                    <invoke name="get">
+                        <argument type="java.lang.Object"><input/></argument>
+                    </invoke>
+                </result>
+            </step>
+        </if>
+        
+    </flow>
+</flows>

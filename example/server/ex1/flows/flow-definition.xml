@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE flows PUBLIC
+  "-//Nimbus//DTD Nimbus Bean Flow 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/beanflow_1_0.dtd">
+
+<flows>
+    
+    <!-- アクション"/Hello"が呼び出された時に、要求の入力ストリームの内容を格納するDataSetを生成するフロー -->
+    <flow name="request/Hello">
+        <return>
+            <object code="jp.ossc.nimbus.beans.dataset.DataSet">
+                <attribute name="Name">HelloRequest</attribute>
+                <attribute name="HeaderSchema">
+                    :name,java.lang.String
+                    :message,java.lang.String
+                </attribute>
+            </object>
+        </return>
+    </flow>
+    
+    <!-- 応答オブジェクトのDataSetを生成するフロー -->
+    <flow name="response/Hello">
+        <return>
+            <object code="jp.ossc.nimbus.beans.dataset.DataSet">
+                <attribute name="Name">HelloResponse</attribute>
+                <attribute name="HeaderSchema">
+                    :message,java.lang.String
+                </attribute>
+            </object>
+        </return>
+    </flow>
+    
+    <!-- アクション"/Hello"が呼び出された時に、処理をするフロー -->
+    <flow name="action/Hello">
+        
+        <step name="RequestMessage">
+            <target><object code="java.lang.StringBuffer"/></target>
+            <attribute name="append" type="java.lang.String"><input>Header.message</input></attribute>
+            <attribute name="append" type="java.lang.String">" from "</attribute>
+            <attribute name="append" type="java.lang.String"><input>Header.Property(name)</input></attribute>
+            <result><attribute name="toString"/></result>
+        </step>
+        
+        <step>
+            <target><static-invoke code="jp.ossc.nimbus.core.ServiceManagerFactory" name="getLogger"/></target>
+            <invoke name="write">
+                <argument type="java.lang.String">INFO</argument>
+                <argument type="java.lang.Object">
+                    <step-ref>RequestMessage</step-ref>
+                </argument>
+            </invoke>
+        </step>
+        
+        <step name="ResponseMessage">
+            <target><object code="java.lang.StringBuffer"/></target>
+            <attribute name="append" type="java.lang.String">"Hello "</attribute>
+            <attribute name="append" type="java.lang.String"><input>Header.Property(name)</input></attribute>
+            <result><attribute name="toString"/></result>
+        </step>
+        
+        <callflow name="response/Hello" stepname="Response"/>
+        
+        <step>
+            <target><step-ref>Response.Header</step-ref></target>
+            <attribute name="message"><step-ref>ResponseMessage</step-ref></attribute>
+        </step>
+        
+        <return><step-ref>Response</step-ref></return>
+    </flow>
+    
+</flows>

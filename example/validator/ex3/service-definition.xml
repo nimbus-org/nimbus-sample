@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- Beanを検証するValidatorサービス -->
+        <service name="Validator"
+                 code="jp.ossc.nimbus.service.validator.BeanFlowValidatorService">
+            
+            <!-- BeanFlowInvokerFactoryサービスを設定する -->
+            <attribute name="BeanFlowInvokerFactoryServiceName">#BeanFlowInvokerFactory</attribute>
+            
+            <!-- 検証するBeanに対する検証フローを設定する -->
+            <attribute name="ClassMapping">
+                sample.Employee=ValidationEmployee
+                sample.Family=ValidationFamily
+            </attribute>
+            
+            <depends>BeanFlowInvokerFactory</depends>
+            <depends>EmployeeValidator</depends>
+            <depends>FamilyValidator</depends>
+        </service>
+        
+        <service name="EmployeeValidator"
+                 code="jp.ossc.nimbus.service.validator.MasterValidatorService">
+            <attribute name="ThreadContextServiceName">#ThreadContext</attribute>
+            <attribute name="CodeMasterName">EMPLOYEE_MST</attribute>
+            <attribute name="RecordSetSearchCondition">
+                PART_CD == PartCode and SECTION_CD == SectionCode and NO == No
+            </attribute>
+            <attribute name="BindDataMap(PartCode)">VALUE.PartCode</attribute>
+            <attribute name="BindDataMap(SectionCode)">VALUE.SectionCode</attribute>
+            <attribute name="BindDataMap(No)">VALUE.No</attribute>
+            <depends>ThreadContext</depends>
+        </service>
+        
+        <service name="FamilyValidator"
+                 code="jp.ossc.nimbus.util.validator.ConditionValidator">
+            <attribute name="Condition">@Name@ != null and @Employee@ != null</attribute>
+        </service>
+        
+        <!-- コードマスタサービス -->
+        <service name="CodeMasterFinder"
+                 code="jp.ossc.nimbus.service.codemaster.CodeMasterService">
+            <attribute name="MasterNames">
+                EMPLOYEE_MST
+            </attribute>
+            <attribute name="NotStartMasterNames">
+                EMPLOYEE_MST
+            </attribute>
+            <attribute name="BeanFlowInvokerFactoryServiceName">#BeanFlowInvokerFactory</attribute>
+            <depends>BeanFlowInvokerFactory</depends>
+            <depends>ConnectionFactory</depends>
+        </service>
+        
+        <!-- BeanFlowサービス -->
+        <service name="BeanFlowInvokerFactory"
+                 code="jp.ossc.nimbus.service.beancontrol.DefaultBeanFlowInvokerFactoryService">
+            <attribute name="DirPaths">flows</attribute>
+            <attribute name="BeanFlowInvokerAccessClass">jp.ossc.nimbus.service.beancontrol.BeanFlowInvokerAccessImpl2</attribute>
+            <attribute name="Validate">true</attribute>
+            <attribute name="InterceptorChainFactoryServiceName">#InterceptorChainFactory</attribute>
+            <depends>InterceptorChainFactory</depends>
+            <depends>JDBCTransactionResourceFactory</depends>
+        </service>
+        
+        <!-- インターセプタチェインファクトリサービス -->
+        <service name="InterceptorChainFactory"
+                 code="jp.ossc.nimbus.service.aop.DefaultInterceptorChainFactoryService">
+            <attribute name="RegexEnabled">true</attribute>
+            <attribute name="InterceptorMapping">
+                Validation.*=ThreadContextInitializeInterceptor
+            </attribute>
+            <depends>
+                <service name="ThreadContextInitializeInterceptor"
+                         code="jp.ossc.nimbus.service.aop.interceptor.ThreadContextInitializeInterceptorService">
+                    <attribute name="ThreadContextServiceName">#ThreadContext</attribute>
+                    <attribute name="CodeMasterFinderServiceName">#CodeMasterFinder</attribute>
+                    <depends>ThreadContext</depends>
+                </service>
+            </depends>
+        </service>
+        
+        <!-- コンテキスト情報を格納するContextサービス -->
+        <service name="ThreadContext"
+                 code="jp.ossc.nimbus.service.context.ThreadContextService"/>
+        
+        <!-- JDBCドライバ経由でConnectionを取得するConnectionFactoryサービス -->
+        <service name="ConnectionFactory"
+                 code="jp.ossc.nimbus.service.connection.JDBCConnectionFactoryService">
+            <attribute name="DriverName">org.hsqldb.jdbcDriver</attribute>
+            <attribute name="ConnectionURL">jdbc:hsqldb:./localDB</attribute>
+            <attribute name="UserName">sa</attribute>
+            <attribute name="Password"></attribute>
+        </service>
+        
+        <!-- JDBC接続のTransactionResourceを生成するResourceFactoryサービス -->
+        <service name="JDBCTransactionResourceFactory"
+                 code="jp.ossc.nimbus.service.resource.datasource.JdbcConnectionFactoryService">
+            <attribute name="ConnectionFactoryServiceName">#ConnectionFactory</attribute>
+            <depends>ConnectionFactory</depends>
+        </service>
+        
+    </manager>
+    
+</server>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server>
+
+<!-- ===================================================================== -->
+<!--                                                                       -->
+<!--  Nimbus Service Configuration                                       -->
+<!--                                                                       -->
+<!-- ===================================================================== -->
+
+<server>
+    <mbean name="Nimbus:class=jp.ossc.nimbus.core.DefaultServiceLoaderService,service=NimbusLoaderService"
+           code="jp.ossc.nimbus.core.DefaultServiceLoaderService">
+        <attribute name="ServicePath">service-definition.xml</attribute>
+    </mbean>
+</server>

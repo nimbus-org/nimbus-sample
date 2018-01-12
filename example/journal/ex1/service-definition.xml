@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- ジャーナルサービス
+          ジャーナリングされたオブジェクトをスレッド毎に管理する。
+          ジャーナリングされたオブジェクトは、endJournalメソッドの呼び出しで、
+          適切なJournalEditorによって、任意のオブジェクトに編集されて、
+          Categoryサービスへと出力依頼される。
+        -->
+        <service name="Journal"
+                 code="jp.ossc.nimbus.service.journal.ThreadManagedJournalService">
+            
+            <!-- EditorFinderサービスのサービス名を設定する -->
+            <attribute name="EditorFinderName">#EditorFinder</attribute>
+            
+            <!-- WritableElementのキー名を設定する
+              ジャーナルオブジェクトをJournalEditorによって編集した後、
+              編集後のオブジェクトをMapに詰めて、Categoryサービスへと渡す。
+              その際の、Mapのキー名であり、最終的にはWritableElementのキーとなる。
+            -->
+            <attribute name="WritableElementKey">Journal for Sample</attribute>
+            
+            <!-- リクエスト通番を発番するSequenceサービスのサービス名を設定する -->
+            <attribute name="SequenceServiceName">#Sequence</attribute>
+            
+            <!-- ジャーナルの出力先となるCategoryサービスのサービス名を設定する -->
+            <attribute name="CategoryServiceNames">#Category</attribute>
+            
+            <depends>EditorFinder</depends>
+            
+            <depends>Sequence</depends>
+            
+            <depends>Category</depends>
+            
+        </service>
+        
+        <!-- ジャーナルを編集するJournalEditorを提供するEditorFinderサービス
+          ジャーナルオブジェクトの型毎に、JournalEditorサービスをマッピングし
+          提供する。
+        -->
+        <service name="EditorFinder"
+                 code="jp.ossc.nimbus.service.journal.editorfinder.ObjectMappedEditorFinderService">
+            
+            <!-- ジャーナルオブジェクトの型毎に、JournalEditorサービスをマッピングする
+              ジャーナルオブジェクトのクラス名=JournalEditorサービス名
+            -->
+            <attribute name="EditorProperties">
+                java.lang.Object=#ObjectJournalEditor
+                java.util.Date=#DateJournalEditor
+                jp.ossc.nimbus.service.journal.RequestJournal=#RequestJournalEditor
+            </attribute>
+            
+            <depends>ObjectJournalEditor</depends>
+            
+            <depends>DateJournalEditor</depends>
+            
+            <depends>RequestJournalEditor</depends>
+            
+        </service>
+        
+        <!-- 任意のオブジェクトを文字列に変換するJournalEditorサービス
+          文字列への変換には、toString()メソッドを使用する
+        -->
+        <service name="ObjectJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.ObjectJournalEditorService">
+            
+            <!-- ジャーナルのキーを出力するかどうかを設定する -->
+            <attribute name="OutputKey">true</attribute>
+            
+        </service>
+        
+        <!-- java.util.Dateオブジェクトを文字列に変換するJournalEditorサービス
+          文字列への変換には、java.text.SimpleDateFormatを使用する
+        -->
+        <service name="DateJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.DateJournalEditorService">
+            
+            <!-- 日付フォーマットを設定する -->
+            <attribute name="Format">yyyy/MM/dd HH:mm:ss.SSS</attribute>
+            
+        </service>
+        
+        <!-- jp.ossc.nimbus.service.journal.RequestJournalオブジェクトを
+          文字列に変換するJournalEditorサービス
+          RequestJournalオブジェクトは、ジャーナルのルート要素、及び各ステップ
+          のルート要素となっている。
+          このサービスは、RequestJournalオブジェクトを、インデントされた入れ子
+          形式の文字列に変換する。
+        -->
+        <service name="RequestJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.SimpleRequestJournalEditorService">
+            
+            <!-- ジャーナルのキーを出力するかどうかを設定する -->
+            <attribute name="OutputKey">true</attribute>
+            
+        </service>
+        
+        <!-- 通番を発番するSequenceサービス
+          ここでは、詳細な説明は行わない。
+        -->
+        <service name="Sequence"
+                 code="jp.ossc.nimbus.service.sequence.StringSequenceService">
+            <attribute name="format">ID_;0,9;0,9;0,9;0,9;0,9;0,9;0,9</attribute>
+        </service>
+        
+        <!-- ジャーナルを出力するCategoryサービス
+          以下は、出力を行うCategoryサービス群であるが、
+          ここでは、詳細な説明は行わない。
+        -->
+        <service name="Category"
+                 code="jp.ossc.nimbus.service.writer.SimpleCategoryService">
+            <attribute name="WritableRecordFactoryServiceName">#WritableRecordFactory</attribute>
+            <attribute name="MessageWriterServiceName">#Writer</attribute>
+            <depends>
+                <!-- 出力情報をフォーマットするWritableRecordFactoryサービス -->
+                <service name="WritableRecordFactory"
+                         code="jp.ossc.nimbus.service.writer.WritableRecordFactoryService">
+                    <attribute name="Format">%Journal for Sample%</attribute>
+                </service>
+            </depends>
+            <depends>
+                <!-- Log4Jを使ってファイルに出力するMessageWriterサービス -->
+                <service name="Writer"
+                         code="jp.ossc.nimbus.service.writer.log4j.FileAppenderWriterService">
+                    <attribute name="Append">false</attribute>
+                    <attribute name="BufferedIO">true</attribute>
+                    <attribute name="BufferSize">1024</attribute>
+                    <attribute name="File">journal.txt</attribute>
+                </service>
+            </depends>
+        </service>
+        
+    </manager>
+    
+</server>

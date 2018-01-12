@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+
+<!--=======================================================================
+リソース取得サービス群
+========================================================================-->
+        
+        <!--ローカルJNDI検索サービス-->
+        <service name="LocalJndiFinder"
+                 code="jp.ossc.nimbus.service.jndi.CachedJndiFinderService">
+            <attribute name="Environment">
+                java.naming.factory.initial=org.jnp.interfaces.NamingContextFactory
+                java.naming.factory.url.pkgs=org.jboss.naming:org.jnp.interfaces
+                java.naming.provider.url=localhost:1099
+            </attribute>
+            <attribute name="CacheMapServiceName">#LocalJndiCache</attribute>
+            <depends>
+                <!-- ローカルJNDIキャッシュサービス -->
+                <service name="LocalJndiCache"
+                         code="jp.ossc.nimbus.service.cache.MemoryCacheMapService"/>
+            </depends>
+        </service>
+
+        <!-- JDBCリソースファクトリ -->
+        <service name="JDBCTransactionResourceFactory"
+                code="jp.ossc.nimbus.service.resource.datasource.JdbcConnectionFactoryService">
+            <attribute name="ConnectionFactoryServiceName">#ConnectionFactory</attribute>
+            <depends>
+                <!-- JDBCコネクションファクトリ -->
+                <service name="ConnectionFactory"
+                         code="jp.ossc.nimbus.service.connection.DataSourceConnectionFactoryService">
+                    <attribute name="Name">java:/DefaultDS</attribute>
+                    <attribute name="JndiFinderServiceName">#LocalJndiFinder</attribute>
+                    <depends>#LocalJndiFinder</depends>
+                </service>
+            </depends>
+        </service>
+
+<!--=======================================================================
+IOC層のスレッド単位の情報を管理するスレッドコンテキスト
+========================================================================-->
+        <service name="ThreadContext" code="jp.ossc.nimbus.service.context.ThreadContextService"/>
+
+<!--=======================================================================
+Command実行中情報を管理するスレッドコンテキスト
+========================================================================-->
+        <service name="CommandThreadContext" code="jp.ossc.nimbus.service.context.ThreadContextService"/>
+
+<!--=======================================================================
+IOCのファサード層のインターセプター定義
+========================================================================-->
+        <service name="SynchCallFacadeInterceptorChain"
+                code="jp.ossc.nimbus.service.aop.DefaultInterceptorChainFactoryService">
+            <attribute name="RegexEnabled">false</attribute>
+            <attribute name="DefaultInterceptorChainListServiceName">
+                #SynchCallFacadeInterceptorChainList
+            </attribute>
+            <depends>SynchCallFacadeInterceptorChainList</depends>
+        </service>
+        
+        <service name="SynchCallFacadeInterceptorChainList"
+                code="jp.ossc.nimbus.service.aop.DefaultInterceptorChainListService">
+            <attribute name="InterceptorServiceNames">
+                #ThreadContextInitializeInterceptor
+                #ThreadContextImportInterceptor
+            </attribute>
+            <depends>ThreadContextInitializeInterceptor</depends>
+            <depends>ThreadContextImportInterceptor</depends>
+        </service>
+        
+        <!-- スレッドコンテキスト初期化インターセプタ -->
+        <service name="ThreadContextInitializeInterceptor"
+                 code="jp.ossc.nimbus.service.aop.interceptor.ThreadContextInitializeInterceptorService">
+            <attribute name="ThreadContextServiceName">#ThreadContext</attribute>
+            <attribute name="InitializeRecursiveCall">false</attribute>
+            <attribute name="CodeMasterFinderServiceName">BondServer.MQ#CodeMaster</attribute>
+            <depends>ThreadContext</depends>
+        </service>
+        
+        <!-- スレッドコンテキスト取り込みインターセプタ -->
+        <service name="ThreadContextImportInterceptor"
+                 code="jp.ossc.nimbus.service.ioccall.interceptor.ThreadContextImportInterceptorService">
+            <attribute name="ThreadContextServiceName">#ThreadContext</attribute>
+            <depends>#ThreadContext</depends>
+        </service>
+
+<!--=======================================================================
+トランザクション制御EJB層のインターセプター定義
+========================================================================-->
+        <!-- none -->
+
+<!--=======================================================================
+IOCのコマンド層のインターセプター定義
+========================================================================-->
+        <service name="CommandExecuteInterceptorChain"
+                code="jp.ossc.nimbus.service.aop.DefaultInterceptorChainFactoryService">
+            <attribute name="RegexEnabled">false</attribute>
+            <attribute name="DefaultInterceptorChainListServiceName">
+                #CommandExecuteInterceptorChainList
+            </attribute>
+            <depends>CommandExecuteInterceptorChainList</depends>
+        </service>
+        
+        <service name="CommandExecuteInterceptorChainList"
+                code="jp.ossc.nimbus.service.aop.DefaultInterceptorChainListService">
+            <attribute name="InterceptorServiceNames">
+                #CommandThreadContextInitializeInterceptor
+            </attribute>
+            <depends>CommandThreadContextInitializeInterceptor</depends>
+        </service>
+        
+        <!-- スレッドコンテキスト初期化インターセプタ -->
+        <service name="CommandThreadContextInitializeInterceptor"
+                 code="jp.ossc.nimbus.service.aop.interceptor.ThreadContextInitializeInterceptorService">
+            <attribute name="ThreadContextServiceName">#CommandThreadContext</attribute>
+            <attribute name="InitializeRecursiveCall">false</attribute>
+            <depends>CommandThreadContext</depends>
+        </service>
+
+<!--=======================================================================
+BEANフロー定義
+========================================================================-->
+        <service name="BeanFlowInvokerFactory"
+                 code="jp.ossc.nimbus.service.beancontrol.DefaultBeanFlowInvokerFactoryService">
+            <attribute name="ThreadContextServiceName">#ThreadContext</attribute>
+            <attribute name="BeanFlowInvokerAccessClass">jp.ossc.nimbus.service.beancontrol.BeanFlowInvokerAccessImpl2</attribute>
+            <attribute name="Validate">true</attribute>
+            <attribute name="DirPaths">${jboss.server.home.dir}/flows</attribute>
+            <depends>ThreadContext</depends>
+            <depends>JDBCTransactionResourceFactory</depends>
+        </service>
+        
+    </manager>
+</server>

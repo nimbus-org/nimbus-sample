@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- アスペクト対象と、アスペクトで挟み込むインタセプタを定義するAspectTranslatorサービス -->
+        <service name="SampleAspect"
+                 code="jp.ossc.nimbus.service.aop.javassist.MethodInterceptorAspectService">
+            <attribute name="TargetClassName">sample\.service\.POJOService</attribute>
+            <attribute name="InterceptorChainListServiceName">#SampleInterceptorChainList</attribute>
+        </service>
+        
+        <!-- アスペクトで挟み込むInterceptorChainListサービス -->
+        <service name="SampleInterceptorChainList"
+                 code="jp.ossc.nimbus.service.aop.DefaultInterceptorChainListService">
+            <attribute name="InterceptorServiceNames">
+                #JournalInterceptor
+            </attribute>
+            
+            <depends>
+                
+                <!-- ジャーナルを出力するInterceptorサービス -->
+                <service name="JournalInterceptor"
+                         code="jp.ossc.nimbus.service.aop.interceptor.MethodJournalInterceptorService">
+                    
+                    <!-- Journalサービスのサービス名を設定する -->
+                    <attribute name="JournalServiceName">#Journal</attribute>
+                    
+                    <depends>Journal</depends>
+                    
+                </service>
+                
+            </depends>
+            
+        </service>
+        
+        <!-- ジャーナルサービス
+          以下は、全てジャーナルサービスに関連するサービス定義であるが、
+          説明は、ここでは省略する。
+        -->
+        <service name="Journal"
+                 code="jp.ossc.nimbus.service.journal.ThreadManagedJournalService">
+            <attribute name="EditorFinderName">#JournalEditorFinder</attribute>
+            <attribute name="WritableElementKey">Journal for Sample</attribute>
+            <attribute name="CategoryServiceNames">#JournalCategory</attribute>
+            <depends>JournalEditorFinder</depends>
+            <depends>JournalCategory</depends>
+        </service>
+        
+        <service name="JournalCategory"
+                 code="jp.ossc.nimbus.service.writer.SimpleCategoryService">
+            <attribute name="MessageWriterServiceName">#JournalWriter</attribute>
+            <attribute name="WritableRecordFactoryServiceName">#JournalWritableRecordFactory</attribute>
+            <depends>JournalWriter</depends>
+            <depends>JournalWritableRecordFactory</depends>
+        </service>
+        
+        <service name="JournalWritableRecordFactory"
+                 code="jp.ossc.nimbus.service.writer.WritableRecordFactoryService">
+            <attribute name="Format">%Journal for Sample%</attribute>
+        </service>
+         
+        <service name="JournalWriter"
+                 code="jp.ossc.nimbus.service.writer.ConsoleWriterService"/>
+        
+        <service name="JournalEditorFinder"
+                 code="jp.ossc.nimbus.service.journal.editorfinder.ObjectMappedEditorFinderService">
+            <attribute name="EditorProperties">
+                java.lang.Object=#ObjectJournalEditor
+                java.lang.Class=#ClassJournalEditor
+                java.util.Date=#DateJournalEditor
+                jp.ossc.nimbus.service.journal.RequestJournal=#RequestJournalEditor
+                jp.ossc.nimbus.service.journal.editor.MethodJournalData=#MethodJournalEditor
+                jp.ossc.nimbus.service.journal.editor.MethodCallJournalData=#MethodCallJournalEditor
+                jp.ossc.nimbus.service.journal.editor.MethodReturnJournalData=#MethodReturnJournalEditor
+            </attribute>
+            <depends>ObjectJournalEditor</depends>
+            <depends>ClassJournalEditor</depends>
+            <depends>DateJournalEditor</depends>
+            <depends>RequestJournalEditor</depends>
+            <depends>MethodJournalEditor</depends>
+            <depends>MethodCallJournalEditor</depends>
+            <depends>MethodReturnJournalEditor</depends>
+        </service>
+        
+        <service name="ObjectJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.ObjectJournalEditorService"/>
+        
+        <service name="ClassJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.ClassJournalEditorService">
+            <attribute name="ShortClassName">true</attribute>
+        </service>
+        
+        <service name="DateJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.DateJournalEditorService">
+            <attribute name="Format">yyyy/MM/dd HH:mm:ss.SSS</attribute>
+        </service>
+        
+        <service name="RequestJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.SimpleRequestJournalEditorService"/>
+        
+        <service name="MethodJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.MethodJournalEditorService"/>
+        
+        <service name="MethodCallJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.MethodCallJournalEditorService"/>
+        
+        <service name="MethodReturnJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.MethodReturnJournalEditorService"/>
+        
+    </manager>
+    
+</server>

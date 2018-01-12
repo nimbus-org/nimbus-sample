@@ -1,0 +1,5 @@
+APL_001,Good morning!,0,Console
+APL_002,Good afternoon\\, @0!,10,File
+APL_003,Good evening\\, @0 and @1!,20,File
+APL_004,Good night\\, #0 and @1!,30,File
+APL_005,Bye @0!,40,File

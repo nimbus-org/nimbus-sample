@@ -1,0 +1,6 @@
+{
+    "property1":"hoge",
+    "property2":100,
+    "property3":[true, false],
+    "property4":"2016/11/17 19:07:56"
+}

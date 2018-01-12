@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- アスペクト対象と、アスペクトで挟み込むインタセプタを定義するAspectTranslatorサービス -->
+        <service name="SampleAspect1"
+                 code="jp.ossc.nimbus.service.aop.javassist.MethodInterceptorAspectService">
+            <attribute name="TargetClassName">sample\.service\.POJOService</attribute>
+            <attribute name="TargetMethodName">displayMessage</attribute>
+            <attribute name="InterceptorChainListServiceName">#SampleInterceptorChainList1</attribute>
+        </service>
+        
+        <!-- アスペクトで挟み込むInterceptorChainListサービス -->
+        <service name="SampleInterceptorChainList1"
+                 code="jp.ossc.nimbus.service.aop.DefaultInterceptorChainListService">
+            <attribute name="InterceptorServiceNames">
+                #MethodAsynchronousInterceptor1
+            </attribute>
+            
+            <depends>
+                
+                <!-- 非同期処理を実行するInterceptorサービス -->
+                <service name="MethodAsynchronousInterceptor1"
+                         code="jp.ossc.nimbus.service.aop.interceptor.MethodAsynchronousInterceptorService">
+                    
+                    <!-- 非同期処理を実行するスレッド数を設定する -->
+                    <attribute name="InvokerThreadSize">5</attribute>
+                    
+                </service>
+                
+            </depends>
+            
+        </service>
+        
+        <!-- アスペクト対象と、アスペクトで挟み込むインタセプタを定義するAspectTranslatorサービス -->
+        <service name="SampleAspect2"
+                 code="jp.ossc.nimbus.service.aop.javassist.MethodInterceptorAspectService">
+            <attribute name="TargetClassName">sample\.service\.POJOService</attribute>
+            <attribute name="TargetMethodName">displayMessage2</attribute>
+            <attribute name="InterceptorChainListServiceName">#SampleInterceptorChainList2</attribute>
+        </service>
+        
+        <!-- アスペクトで挟み込むInterceptorChainListサービス -->
+        <service name="SampleInterceptorChainList2"
+                 code="jp.ossc.nimbus.service.aop.DefaultInterceptorChainListService">
+            <attribute name="InterceptorServiceNames">
+                #MethodAsynchronousInterceptor2
+            </attribute>
+            
+            <depends>
+                
+                <!-- 非同期処理を実行するInterceptorサービス -->
+                <service name="MethodAsynchronousInterceptor2"
+                         code="jp.ossc.nimbus.service.aop.interceptor.MethodAsynchronousInterceptorService">
+                    
+                    <!-- 非同期処理の応答時間のタイムアウトを設定する
+                      タイムアウトした場合は、AsynchronousTimeoutExceptionが発生する。
+                      FailToWaitResponseTimeout属性で、falseを設定すると、
+                      タイムアウトした場合に、nullを返すようになる。
+                    -->
+                    <attribute name="ResponseTimeout">1000</attribute>
+                    
+                </service>
+                
+            </depends>
+            
+        </service>
+        
+    </manager>
+    
+</server>

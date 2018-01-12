@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE scenarioGroup PUBLIC
+  "-//Nimbus//DTD Nimbus ScenarioGroup Resource 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/scenariogroup_1_0.dtd">
+
+<scenarioGroup creator                  ="シナリオグループ作成者１"
+               expectedCost             ="60"
+               scheduledCreateStartDate ="2016/12/12 09:00"
+               scheduledCreateEndDate   ="2016/12/12 10:00"
+               createStartDate          ="2016/12/12 10:00"
+               createEndDate            ="2016/12/12 12:00"
+               progress                 ="100"
+               cost                     ="120">
+    
+    <title>シナリオグループ１</title>
+    <description>シナリオグループ１の説明です。</description>
+    
+    <category name="リリース" value="フェーズ１"/>
+    
+</scenarioGroup>

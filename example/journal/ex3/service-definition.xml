@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- ジャーナルサービス -->
+        <service name="Journal"
+                 code="jp.ossc.nimbus.service.journal.ThreadManagedJournalService">
+            <attribute name="EditorFinderName">#EditorFinder</attribute>
+            <attribute name="WritableElementKey">Journal</attribute>
+            <attribute name="SequenceServiceName">#Sequence</attribute>
+            <attribute name="CategoryServiceNames">#Category</attribute>
+            <depends>EditorFinder</depends>
+            <depends>Sequence</depends>
+            <depends>Category</depends>
+        </service>
+        
+        <!-- ジャーナルを編集するJournalEditorを提供するEditorFinderサービス -->
+        <service name="EditorFinder"
+                 code="jp.ossc.nimbus.service.journal.editorfinder.ObjectMappedEditorFinderService">
+            <attribute name="EditorProperties">
+                java.lang.Object=#ObjectJournalEditor
+                java.util.Date=#DateJournalEditor
+                jp.ossc.nimbus.service.journal.RequestJournal=#RequestJournalEditor
+            </attribute>
+            <depends>ObjectJournalEditor</depends>
+            <depends>DateJournalEditor</depends>
+            <depends>RequestJournalEditor</depends>
+        </service>
+        
+        <!-- 任意のオブジェクトを文字列に変換するJournalEditorサービス -->
+        <service name="ObjectJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.ObjectJournalEditorService"/>
+        
+        <!-- java.util.Dateオブジェクトを文字列に変換するJournalEditorサービス -->
+        <service name="DateJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.DateJournalEditorService">
+            <attribute name="Format">yyyy/MM/dd HH:mm:ss.SSS</attribute>
+        </service>
+        
+        <!-- jp.ossc.nimbus.service.journal.RequestJournalオブジェクトを
+          java.util.Mapに変換するJournalEditorサービス
+          RequestJournalオブジェクトは、ジャーナルのルート要素、及び各ステップ
+          のルート要素となっている。
+          このサービスは、RequestJournalオブジェクトを、java.util.Mapに変換する。
+        -->
+        <service name="RequestJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.SimpleRequestMapJournalEditorService"/>
+        
+        <!-- 通番を発番するSequenceサービス
+          ここでは、詳細な説明は行わない。
+        -->
+        <service name="Sequence"
+                 code="jp.ossc.nimbus.service.sequence.StringSequenceService">
+            <attribute name="format">ID_;0,9;0,9;0,9;0,9;0,9;0,9;0,9</attribute>
+        </service>
+        
+        <!-- ジャーナルを出力するCategoryサービス
+          以下は、出力を行うCategoryサービス群であるが、
+          ここでは、詳細な説明は行わない。
+        -->
+        <service name="Category"
+                 code="jp.ossc.nimbus.service.writer.SimpleCategoryService">
+            <attribute name="WritableRecordFactoryServiceName">#WritableRecordFactory</attribute>
+            <attribute name="MessageWriterServiceName">#Writer</attribute>
+            <depends>
+                <!-- 出力情報をフォーマットするWritableRecordFactoryサービス -->
+                <service name="WritableRecordFactory"
+                         code="jp.ossc.nimbus.service.writer.PropertyWritableRecordFactoryService">
+                    <attribute name="FormatKeyMapping">
+                        START_TIME=Journal.StartTime
+                        REQUEST_ID=Journal.RequestID
+                        NAME=Journal.JournalKey
+                        STEP_PERFORMANCE=Journal.JournalRecords.Step1[0].Performance
+                        PERFORMANCE=Journal.Performance
+                    </attribute>
+                    <attribute name="Format">-----${line.separator}リクエスト通番=%REQUEST_ID%${line.separator}開始時刻=%START_TIME%${line.separator}スレッド名=%NAME%${line.separator}ステップ処理時間=%STEP_PERFORMANCE%[ms]${line.separator}処理時間=%PERFORMANCE%[ms]</attribute>
+                </service>
+            </depends>
+            <depends>
+                <!-- Log4Jを使ってファイルに出力するMessageWriterサービス -->
+                <service name="Writer"
+                         code="jp.ossc.nimbus.service.writer.log4j.FileAppenderWriterService">
+                    <attribute name="Append">false</attribute>
+                    <attribute name="BufferedIO">true</attribute>
+                    <attribute name="BufferSize">1024</attribute>
+                    <attribute name="File">journal.txt</attribute>
+                </service>
+            </depends>
+        </service>
+        
+    </manager>
+    
+</server>

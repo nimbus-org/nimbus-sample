@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- JFreeCharを生成するJFreeCharFactoryサービス -->
+        <service name="ChartFactory"
+                 code="jp.ossc.nimbus.service.graph.JFreeChartFactoryService">
+            
+            <!-- Plotを生成するPlotFactoryサービスのサービス名を設定する -->
+            <attribute name="PlotFactoryServiceName">#PlotFactory</attribute>
+            
+            <depends>#PlotFactory</depends>
+        </service>
+        
+        <!-- Plotを生成するPlotFactoryサービス -->
+        <service name="PlotFactory"
+                 code="jp.ossc.nimbus.service.graph.XYPlotFactoryService">
+            
+            <!-- PlotConditionでPlotを特定するためのPlotの名前を設定する -->
+            <attribute name="Name">Sample1</attribute>
+            
+            <!-- Datasetを生成するDatasetFactoryサービスのサービス名を設定する -->
+            <attribute name="DatasetFactoryServiceNames">
+                #DatasetFactory
+            </attribute>
+            
+            <!-- 縦軸を描画するAxisサービスのサービス名を設定する -->
+            <attribute name="RangeAxisServiceNames">
+                #OHLCAxis
+            </attribute>
+            
+            <!-- 横軸を描画するAxisサービスのサービス名を設定する -->
+            <attribute name="DomainAxisServiceNames">
+                #DateAxis
+            </attribute>
+            
+            <attribute name="DatasetRendererServiceNames">
+                OHLC=#OHLCRenderer
+            </attribute>
+            
+            <depends>#DatasetFactory</depends>
+            <depends>#OHLCAxis</depends>
+            <depends>#DateAxis</depends>
+            <depends>#OHLCRenderer</depends>
+        </service>
+        
+        <!-- Datasetを生成するDatasetFactoryサービス -->
+        <service name="DatasetFactory"
+                 code="jp.ossc.nimbus.service.graph.CSVFileOHLCDatasetFactoryService">
+            
+            <attribute name="Name">OHLC</attribute>
+            <attribute name="SeriesName">OHLC</attribute>
+            
+            <!-- CSVファイルの日付列のフォーマットを設定する -->
+            <attribute name="DateFormatPattern">yyyy/MM/dd</attribute>
+            
+            <!-- 時系列データ１のCSVファイルの情報を設定する -->
+            <attribute name="CSVFileInfo(OHLC)">
+                <object code="jp.ossc.nimbus.service.graph.CSVFileOHLCDatasetFactoryService$CSVFileInfo">
+                    
+                    <!-- CSVファイル名を設定する -->
+                    <attribute name="File">./data1.csv</attribute>
+                </object>
+            </attribute>
+        </service>
+        
+        <!-- 横軸を描画するAxisを生成するファクトリサービス -->
+        <service name="DateAxis"
+                 code="org.jfree.chart.axis.DateAxis"
+                 instance="factory">
+            
+            <!-- ラベルを設定する -->
+            <attribute name="Label">日付</attribute>
+            
+            <attribute name="TickUnit">
+                <object code="org.jfree.chart.axis.DateTickUnit">
+                    <constructor>
+                        <argument type="int">
+                            <static-field-ref code="org.jfree.chart.axis.DateTickUnit" name="DAY"/>
+                        </argument>
+                        <argument type="int">1</argument>
+                        <argument type="java.text.DateFormat">
+                            <object code="java.text.SimpleDateFormat">
+                                <constructor>
+                                    <argument>yy/MM/dd</argument>
+                                </constructor>
+                            </object>
+                        </argument>
+                    </constructor>
+                </object>
+            </attribute>
+        </service>
+        
+        <!-- 縦軸を描画するAxisを生成するファクトリサービス -->
+        <service name="OHLCAxis"
+                 code="org.jfree.chart.axis.NumberAxis"
+                 instance="factory">
+            
+            <!-- ラベルを設定する -->
+            <attribute name="Label">日足</attribute>
+        </service>
+
+        <!-- ローソク足描画サービス -->
+        <service name="OHLCRenderer"
+                 code="org.jfree.chart.renderer.xy.CandlestickRenderer"
+                 instance="factory">
+            <constructor>
+                <argument type="double">10.0</argument>
+            </constructor>
+            <attribute name="BaseSeriesVisibleInLegend">false</attribute>
+            <attribute name="UpPaint" type="java.awt.Paint">
+                <static-field-ref code="java.awt.Color" name="RED"/>
+            </attribute>
+            <attribute name="DownPaint" type="java.awt.Paint">
+                <static-field-ref code="java.awt.Color" name="BLUE"/>
+            </attribute>
+            <attribute name="VolumePaint" type="java.awt.Paint">
+                <static-field-ref code="java.awt.Color" name="ORANGE"/>
+            </attribute>
+            <attribute name="SeriesPaint[0]">
+                <static-field-ref code="java.awt.Color" name="BLACK"/>
+            </attribute>
+            <attribute name="SeriesStroke[0]">
+                <object code="java.awt.BasicStroke">
+                    <constructor>
+                        <argument type="float">3.0</argument>
+                    </constructor>
+                </object>
+            </attribute>
+        </service>
+        
+        <!-- PNG形式の画像を生成するImageWriterを生成するファクトリサービス -->
+        <service name="ImageWriter"
+                 code="javax.imageio.ImageWriter"
+                 instance="factory">
+            <constructor>
+                <invoke name="next">
+                    <target>
+                        <static-invoke code="javax.imageio.ImageIO"
+                                       name="getImageWritersByFormatName">
+                            <argument>png</argument>
+                        </static-invoke>
+                    </target>
+                </invoke>
+            </constructor>
+        </service>
+        
+    </manager>
+    
+</server>

@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <manager-property name="WEB_SERVER_DOMAIN">localhost:10000</manager-property>
+        
+<!--=======================================================================
+テストフレームワーク コアサービス群
+========================================================================-->
+        
+        <!-- TestControllerサービス -->
+        <service name="TestController"
+                 code="jp.ossc.nimbus.service.test.TestControllerService">
+            
+            <attribute name="TestResourceFileBaseDirectory">./controller</attribute>
+            
+            <attribute name="TestResourceFileTempDirectory">./tmp</attribute>
+            
+            <attribute name="TestResourceManagerServiceName">#TestResourceManager</attribute>
+            
+            <attribute name="StubResourceManagerServiceName">#StubResourceManager</attribute>
+            
+            <attribute name="TestStubServiceNames">
+                #WebStub
+            </attribute>
+            
+            <depends>TestResourceManager</depends>
+            <depends>StubResourceManager</depends>
+            <depends>WebStub</depends>
+            
+        </service>
+        
+        <!-- TestReporterサービス -->
+        <service name="TestReporter"
+                 code="jp.ossc.nimbus.service.test.report.ConsoleTestReporterService"/>
+        
+        <!-- TestReporterサービス -->
+        <service name="CSVTestReporter"
+                 code="jp.ossc.nimbus.service.test.report.CSVTestReporterService">
+            
+            <attribute name="OutputFile">./report.csv</attribute>
+        </service>
+        
+        <!-- TestResourceManagerサービス -->
+        <service name="TestResourceManager"
+                 code="jp.ossc.nimbus.service.test.resource.LocalTestResourceManagerService">
+            
+            <attribute name="TestResourceDirectory">./test</attribute>
+            
+            <attribute name="ExcludeFilterRegexs">
+                CVS
+            </attribute>
+            
+            <attribute name="TemplateEngineServiceName">#TemplateEngine</attribute>
+            <depends>TemplateEngine</depends>
+            
+        </service>
+        
+        <!-- TemplateEngineサービス -->
+        <service name="TemplateEngine"
+                 code="jp.ossc.nimbus.service.test.resource.VelocityTemplateEngineService">
+            
+            <attribute name="TemplateResourceDirectory">./template</attribute>
+            
+        </service>
+        
+        <!-- StubResourceManagerサービス -->
+        <service name="StubResourceManager"
+                 code="jp.ossc.nimbus.service.test.resource.LocalStubResourceManagerService">
+            
+            <attribute name="TemporaryDirectory">./tmp</attribute>
+            
+        </service>
+        
+<!--=======================================================================
+テストフレームワーク スタブサービス群
+========================================================================-->
+        
+        <!-- Webサーバのサービス -->
+        <service name="WebStubServer"
+                 code="jp.ossc.nimbus.service.http.proxy.ProxyServerService">
+            <attribute name="Port">10000</attribute>
+            <attribute name="ProcessServiceName">#WebStub</attribute>
+            <depends>
+                <!-- WebサーバのTestStubサービス -->
+                <service name="WebStub"
+                         code="jp.ossc.nimbus.service.test.stub.http.HttpTestStubService">
+                    
+                    <attribute name="Id">WebServer</attribute>
+                    
+                    <attribute name="StubResourceManagerServiceName">#StubResourceManager</attribute>
+                    
+                    <attribute name="InterpreterServiceName">#Interpreter</attribute>
+                    
+                    <attribute name="ResourceDirectory">./stub</attribute>
+                    
+                    <depends>StubResourceManager</depends>
+                    <depends>Interpreter</depends>
+                    
+                </service>
+            </depends>
+        </service>
+        
+<!--=======================================================================
+テストフレームワーク アクションサービス群
+========================================================================-->
+        
+        <!-- HTTPリクエストを行うTestActionサービス -->
+        <service name="HttpRequestAction"
+                 code="jp.ossc.nimbus.service.test.action.HttpRequestActionService">
+            
+            <attribute name="HttpClientFactoryServiceName">#HttpClientFactory</attribute>
+            
+            <depends>HttpClientFactory</depends>
+        </service>
+        
+        <!-- MBean呼び出しを行うTestActionサービス -->
+        <service name="MBeanCallAction"
+                 code="jp.ossc.nimbus.service.test.action.MBeanCallActionService">
+            
+            <attribute name="MBeanServerConnectionFactoryServiceName">#MBeanServerConnectionFactory</attribute>
+            
+            <attribute name="InterpreterServiceName">#Interpreter</attribute>
+            
+            <depends>MBeanServerConnectionFactory</depends>
+            <depends>Interpreter</depends>
+        </service>
+        
+        <!-- サービス呼び出しを行うTestActionサービス -->
+        <service name="ServiceCallAction"
+                 code="jp.ossc.nimbus.service.test.action.ServiceCallActionService">
+            
+            <attribute name="InterpreterServiceName">#Interpreter</attribute>
+            
+            <depends>Interpreter</depends>
+        </service>
+        
+        <!-- ServerConnectionでMessage送信を行うTestActionサービス -->
+        <service name="ServerConnectionSendAction"
+                 code="jp.ossc.nimbus.service.test.action.ServerConnectionSendActionService">
+            
+            <attribute name="ServerConnectionFactoryServiceName">#PublishConnectionFactory</attribute>
+            
+            <attribute name="InterpreterServiceName">#Interpreter</attribute>
+            
+            <depends>PublishConnectionFactory</depends>
+            <depends>Interpreter</depends>
+        </service>
+        
+        <!-- MessageReceiverでMessage受信を行うTestActionサービス -->
+        <service name="MessageReceiverListenAction"
+                 code="jp.ossc.nimbus.service.test.action.MessageReceiverListenActionService">
+            
+            <attribute name="MessageReceiverServiceName">#MessageReceiver</attribute>
+            
+            <depends>MessageReceiver</depends>
+        </service>
+        
+        <!-- MessageReceiverListenActionServiceが受信したMessageを取得するTestActionサービス -->
+        <service name="MessageReceiverGetAction"
+                 code="jp.ossc.nimbus.service.test.action.MessageReceiverGetActionService"/>
+        
+        <!-- Java言語で書かれたスクリプトをインタプリタ実行するTestActionサービス -->
+        <service name="InterpreterAction"
+                 code="jp.ossc.nimbus.service.test.action.InterpreterActionService">
+            
+            <attribute name="InterpreterServiceName">#Interpreter</attribute>
+            
+            <depends>Interpreter</depends>
+        </service>
+        
+        <!-- オブジェクトのプロパティを取得するTestActionサービス -->
+        <service name="PropertyGetAction"
+                 code="jp.ossc.nimbus.service.test.action.PropertyGetActionService"/>
+        
+        <!-- オブジェクトをtoStringしてファイルに出力するTestActionサービス -->
+        <service name="ObjectFormatToFileAction"
+                 code="jp.ossc.nimbus.service.test.action.ObjectToFileConvertActionService"/>
+        
+        <!-- CSVファイルをRecordに変換するTestActionサービス -->
+        <service name="CSVToRecordConvertAction"
+                 code="jp.ossc.nimbus.service.test.action.FileToObjectConvertActionService">
+            
+            <attribute name="StreamConverterServiceName">#RecordCSVConverter</attribute>
+            
+            <depends>RecordCSVConverter</depends>
+        </service>
+        
+        <!-- CSVファイルをRecordListに変換するTestActionサービス -->
+        <service name="CSVToRecordListConvertAction"
+                 code="jp.ossc.nimbus.service.test.action.FileToObjectConvertActionService">
+            
+            <attribute name="StreamConverterServiceName">#RecordListCSVConverter</attribute>
+            
+            <depends>RecordListCSVConverter</depends>
+        </service>
+        
+        <!-- RecordListをCSVファイルに変換するTestActionサービス -->
+        <service name="RecordListToCSVConvertAction"
+                 code="jp.ossc.nimbus.service.test.action.ObjectToFileConvertActionService">
+            
+            <attribute name="StreamConverterServiceName">#RecordListCSVConverter</attribute>
+            
+            <depends>RecordListCSVConverter</depends>
+        </service>
+        
+<!--=======================================================================
+テストフレームワーク 評価アクションサービス群
+========================================================================-->
+        
+        <!-- テキスト比較を行うEvaluateTestActionサービス -->
+        <service name="TextCompareEvaluateAction"
+                 code="jp.ossc.nimbus.service.test.evaluate.TextCompareEvaluateActionService">
+            
+            <attribute name="OutputFileAfterEdit">true</attribute>
+        </service>
+        
+        <!-- CSVテキスト比較を行うEvaluateTestActionサービス -->
+        <service name="CSVCompareEvaluateAction"
+                 code="jp.ossc.nimbus.service.test.evaluate.CSVCompareEvaluateActionService">
+            
+            <attribute name="OutputFileAfterEdit">true</attribute>
+        </service>
+        
+        <!-- テキストの評価を行うEvaluateTestActionサービス -->
+        <service name="TextEvaluateAction"
+                 code="jp.ossc.nimbus.service.test.evaluate.TextEvaluateActionService"/>
+        
+        
+<!--=======================================================================
+テストフレームワーク 連鎖アクションサービス群
+========================================================================-->
+        
+        <!-- MBean呼び出し結果をファイルに出力するまでを連鎖させるChainTestActionサービス -->
+        <service name="MBeanCallOutputChainAction"
+                 code="jp.ossc.nimbus.service.test.ChainTestActionService">
+            
+            <attribute name="ActionServiceNames">
+                #MBeanCallAction
+                #PropertyGetAction
+                #ObjectFormatToFileAction
+            </attribute>
+            
+            <depends>MBeanCallAction</depends>
+            <depends>PropertyGetAction</depends>
+            <depends>ObjectFormatToFileAction</depends>
+        </service>
+        
+        <!-- Recordを生成してServerConnectionで送信するまでを連鎖させるChainTestActionサービス -->
+        <service name="RecordServerConnectionSendChainAction"
+                 code="jp.ossc.nimbus.service.test.ChainTestActionService">
+            
+            <attribute name="ActionServiceNames">
+                #InterpreterAction
+                #CSVToRecordConvertAction
+                #ServerConnectionSendAction
+            </attribute>
+            
+            <depends>InterpreterAction</depends>
+            <depends>CSVToRecordConvertAction</depends>
+            <depends>ServerConnectionSendAction</depends>
+        </service>
+        
+<!--=======================================================================
+テストフレームワーク 連鎖評価アクションサービス群
+========================================================================-->
+        
+        <!-- MessageReceiverでRecordを受信してファイルに出力して比較評価するまでを連鎖させるChainTestActionサービス -->
+        <service name="RecordMessageReceiverReceiveChainAction"
+                 code="jp.ossc.nimbus.service.test.ChainEvaluateTestActionService">
+            
+            <attribute name="ActionServiceNames">
+                #MessageReceiverGetAction
+                #RecordListToCSVConvertAction
+            </attribute>
+            <attribute name="EndEvaluateTestActionServiceName">#CSVCompareEvaluateAction</attribute>
+            
+            <depends>MessageReceiverGetAction</depends>
+            <depends>RecordListToCSVConvertAction</depends>
+            <depends>CSVCompareEvaluateAction</depends>
+        </service>
+        
+<!--=======================================================================
+その他サービス群
+========================================================================-->
+        
+        <!-- Java言語で書かれたスクリプトをインタプリタ実行するInterpreterサービス -->
+        <service name="Interpreter"
+                 code="jp.ossc.nimbus.service.interpreter.BeanShellInterpreterService"/>
+        
+        <!-- HttpClientを生成するHttpClientFactoryサービス -->
+        <service name="HttpClientFactory"
+                 code="jp.ossc.nimbus.service.http.httpclient.HttpClientFactoryService">
+            
+            <!-- リクエストする情報を、アクション名と関連付ける -->
+            <attribute name="Request(Action1)">
+                <object code="jp.ossc.nimbus.service.http.httpclient.GetHttpRequestImpl">
+                    <attribute name="URL">http://${WEB_SERVER_DOMAIN}/test/action1.bf</attribute>
+                </object>
+            </attribute>
+        </service>
+        
+        <!-- MBeanServerConnectionを生成するMBeanServerConnectionFactoryサービス -->
+        <service name="MBeanServerConnectionFactory"
+                 code="jp.ossc.nimbus.service.jmx.DefaultMBeanServerConnectionFactoryService">
+            
+            <attribute name="ServiceURL">service:jmx:rmi:///jndi/rmi://localhost:1234/jmxrmi</attribute>
+        </service>
+        
+        <!-- Messageの送受信を行うServerConnectionFactory及びClientConnectionFactoryサービス -->
+        <service name="PublishConnectionFactory"
+                 code="jp.ossc.nimbus.service.publish.tcp.ConnectionFactoryService"/>
+        
+        <!-- Messageの送受信を行うServerConnectionFactory及びClientConnectionFactoryサービス -->
+        <service name="MessageReceiver"
+                 code="jp.ossc.nimbus.service.publish.MessageReceiverService">
+            
+            <attribute name="ClientConnectionFactoryServiceName">#PublishConnectionFactory</attribute>
+            
+            <attribute name="StartReceiveOnStart">true</attribute>
+            
+            <depends>PublishConnectionFactory</depends>
+        </service>
+        
+        <!-- RecordListとCSV形式のストリームの相互変換を行うStreamConverterサービス -->
+        <service name="RecordListCSVConverter"
+                 code="jp.ossc.nimbus.util.converter.RecordListCSVConverter">
+            
+            <attribute name="ExistsHeader">true</attribute>
+        </service>
+        
+        <!-- RecordとCSV形式のストリームの相互変換を行うStreamConverterサービス -->
+        <service name="RecordCSVConverter"
+                 code="jp.ossc.nimbus.util.converter.RecordCSVConverter">
+            
+            <attribute name="ExistsHeader">true</attribute>
+        </service>
+        
+    </manager>
+    
+</server>

@@ -1,0 +1,5 @@
+APL_001,Good morning!,0,Sample
+APL_002,Good afternoon\\, @0!,10,Sample
+APL_003,Good evening\\, @0 and @1!,20,Sample
+APL_004,Good night\\, #0 and @1!,30,Sample
+APL_005,Bye @0!,40,Sample

@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE flows PUBLIC
+  "-//Nimbus//DTD Nimbus Bean Flow 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/beanflow_1_0.dtd">
+
+<flows>
+    
+<!--=======================================================================
+入出力データフロー
+========================================================================-->
+    
+    <!-- 入力データ
+         戻り値：DataSet
+    -->
+    <flow name="login/request">
+        
+        <!--
+          DataSetServletRequestParameterConverterサービスがリクエストパス"/login.bf"の
+          リクエストパラメータを格納するDataSetを取得するために呼び出すフロー名を別名
+          として持たせる。
+        -->
+        <alias name="dataset/login"/>
+        
+        <callflow stepname="DataSet" name="common/request"/>
+        
+        <step>
+            <target><step-ref>DataSet</step-ref></target>
+            <attribute name="Name">loginRequest</attribute>
+            <attribute name="HeaderSchema">
+                :id,java.lang.String,,,value != null and @value.length@ != 0
+                :password,java.lang.String,,,value != null and @value.length@ != 0
+            </attribute>
+            <result><this/></result>
+        </step>
+    </flow>
+    
+    <!-- 出力データ
+         引数：BeanFlowServletContext
+         戻り値：DataSet
+    -->
+    <flow name="login/response">
+        
+        <callflow stepname="DataSet" name="common/response">
+            <argument><input/></argument>
+        </callflow>
+        
+        <step>
+            <target><step-ref>DataSet</step-ref></target>
+            <attribute name="Name">loginResponse</attribute>
+            <result><this/></result>
+        </step>
+        
+    </flow>
+    
+<!--=======================================================================
+アクション入力検証フロー
+========================================================================-->
+    
+    <!-- ログイン入力検証フロー
+         引数：BeanFlowServletContext
+         戻り値：検証成功の場合、true。検証失敗の場合、false。
+    -->
+    <flow name="login/validate">
+        
+        <!--
+          BeanFlowServletがリクエストパス"/login.bf"の入力検証を実行するために呼び出す
+          フロー名を別名として持たせる。
+        -->
+        <alias name="validate/login"/>
+        
+        <!-- 検証結果が成功に設定 -->
+        <step name="Valid">
+            <result><static-field-ref code="java.lang.Boolean" name="TRUE"/></result>
+        </step>
+        
+        <!-- 出力DataSetを作っておく -->
+        <callflow name="login/response" stepname="Output">
+            <argument><input/></argument>
+        </callflow>
+        
+        <switch>
+            <case test="@input.Input@ == null">
+                
+                <!-- レスポンスDataSetにエラーメッセージを設定 -->
+                <step>
+                    <target><step-ref>Output.Header(Common)</step-ref></target>
+                    <attribute name="message">パラメータが不正です。</attribute>
+                </step>
+                
+                <!-- 検証結果をエラーに設定 -->
+                <step name="Valid">
+                    <result><static-field-ref code="java.lang.Boolean" name="FALSE"/></result>
+                </step>
+            </case>
+            <default>
+                
+                <!-- IDを検証 -->
+                <step name="ValidId">
+                    <target><input>Input.Header</input></target>
+                    <result>
+                        <invoke name="validateProperty">
+                            <argument>id</argument>
+                        </invoke>
+                    </result>
+                </step>
+                
+                <!-- パスワードを検証 -->
+                <step name="ValidPassword">
+                    <target><input>Input.Header</input></target>
+                    <result>
+                        <invoke name="validateProperty">
+                            <argument>password</argument>
+                        </invoke>
+                    </result>
+                </step>
+                
+                <!-- 検証結果がエラーの場合 -->
+                <if test="!@ValidId@ or !@ValidPassword@">
+                    
+                    <!-- レスポンスDataSetにエラーメッセージを設定 -->
+                    <step>
+                        <target><step-ref>Output.Header(Common)</step-ref></target>
+                        <attribute name="message">IDまたはパスワードが指定されていません。</attribute>
+                    </step>
+                    
+                    <!-- 検証結果をエラーに設定 -->
+                    <step name="Valid">
+                        <result><static-field-ref code="java.lang.Boolean" name="FALSE"/></result>
+                    </step>
+                </if>
+            </default>
+        </switch>
+        
+        <!-- 検証結果がエラーの場合 -->
+        <if test="!@Valid@">
+            
+            <!-- ログイン画面に転送 -->
+            <callflow name="forward">
+                <argument><input/></argument>
+                <argument>/index.jsp</argument>
+            </callflow>
+        </if>
+        
+        <!-- 検証結果を返す -->
+        <return><step-ref>Valid</step-ref></return>
+    </flow>
+    
+<!--=======================================================================
+アクションフロー
+========================================================================-->
+    
+    <!-- 
+         引数：BeanFlowServletContext
+         転送先：ログイン成功の場合、/WEB-INF/hello.jsp。失敗の場合、/index.jsp
+    -->
+    <flow name="login">
+        
+        <!--
+          BeanFlowServletがリクエストパス"/login.bf"の業務処理を実行するために呼び出す
+          フロー名を別名として持たせる。
+        -->
+        <alias name="/login"/>
+        
+        <switch>
+            <case test="@input.Input.Header.id@ == 'hoge' and @input.Input.Header.password@ == 'fuga'">
+                
+                <!-- パラメータ暗号化ユーティリティを生成 -->
+                <step name="Crypt">
+                    <result>
+                        <object code="jp.ossc.nimbus.util.crypt.CryptParameters">
+                            <constructor>
+                                <argument>hogehoge</argument>
+                            </constructor>
+                        </object>
+                    </result>
+                </step>
+                
+                <!-- パラメータマップを生成 -->
+                <step name="ParamMap">
+                    <target><step-ref>Crypt</step-ref></target>
+                    <result><invoke name="createParametersMap"/></result>
+                </step>
+                
+                <!-- パラメータマップにパラメータを格納する -->
+                <step>
+                    <target><step-ref>ParamMap</step-ref></target>
+                    <attribute name="id"><input>Input.Header.id</input></attribute>
+                </step>
+                
+                <!-- パラメータマップからハッシュ値を生成 -->
+                <step name="Ticket">
+                    <target><step-ref>Crypt</step-ref></target>
+                    <result>
+                        <invoke name="createHash">
+                            <argument type="java.util.Map"><step-ref>ParamMap</step-ref></argument>
+                        </invoke>
+                    </result>
+                </step>
+                
+                <!-- 認証情報を生成 -->
+                <step name="AuthInfo">
+                    <target>
+                        <object code="jp.ossc.nimbus.beans.dataset.Record">
+                            <attribute name="Schema">
+                                :id,java.lang.String
+                                :ticket,java.lang.String
+                            </attribute>
+                        </object>
+                    </target>
+                    <attribute name="id"><input>Input.Header.id</input></attribute>
+                    <attribute name="ticket"><step-ref>Ticket</step-ref></attribute>
+                    <result><this/></result>
+                </step>
+                
+                <!-- 認証情報をリクエスト属性に設定して、AuthenticateInterceptorに連携する -->
+                <step>
+                    <target><input>Request</input></target>
+                    <attribute name="Attribute(auth)"><step-ref>AuthInfo</step-ref></attribute>
+                </step>
+                        
+                <!-- レスポンスDataSetに認証情報を設定 -->
+                <step>
+                    <target><input>Output.Header(Common)</input></target>
+                    <attribute name="id"><input>Input.Header.id</input></attribute>
+                    <attribute name="ticket"><step-ref>Ticket</step-ref></attribute>
+                </step>
+                
+                <!-- ようこそ画面に転送 -->
+                <callflow name="forward">
+                    <argument><input/></argument>
+                    <argument>/WEB-INF/hello.jsp</argument>
+                </callflow>
+            </case>
+            <default>
+                
+                <!-- レスポンスDataSetにエラーメッセージを設定 -->
+                <step>
+                    <target><input>Output.Header(Common)</input></target>
+                    <attribute name="message">IDまたはパスワードが間違っています。</attribute>
+                </step>
+                
+                <!-- ログイン画面に転送 -->
+                <callflow name="forward">
+                    <argument><input/></argument>
+                    <argument>/index.jsp</argument>
+                </callflow>
+            </default>
+        </switch>
+    </flow>
+</flows>

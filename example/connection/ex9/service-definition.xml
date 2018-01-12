@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- ラップしたConnectionを取得するConnectionFactoryサービス -->
+        <service name="TransactionLoggingConnectionFactory"
+                 code="jp.ossc.nimbus.service.connection.WrappedConnectionFactoryService">
+            
+            <!-- ラップする元となるConnectionを生成するConnectionFactoryサービスのサービス名を設定する -->
+            <attribute name="ConnectionFactoryServiceName">#ConnectionFactory1</attribute>
+            
+            <!-- ラップする元となるConnectionラッパークラス名を設定する -->
+            <attribute name="ConnectionWrapperClassName">jp.ossc.nimbus.util.sql.TransactionLoggingConnection</attribute>
+            
+            <!-- Connectionラッパーに設定するプロパティを設定する
+              ConnectionラッパーにSequenceサービスを設定する
+            -->
+            <attribute name="ConnectionWrapperProperties">
+                <object code="java.util.LinkedHashMap">
+                    <attribute name="Sequence">
+                        <service-ref>#Sequence</service-ref>
+                    </attribute>
+                </object>
+            </attribute>
+            
+            <depends>ConnectionFactory1</depends>
+            <depends>Sequence</depends>
+        </service>
+        
+        <!-- JDBCドライバ経由でConnectionを取得するConnectionFactoryサービス -->
+        <service name="ConnectionFactory1"
+                 code="jp.ossc.nimbus.service.connection.JDBCConnectionFactoryService">
+            <attribute name="DriverName">org.hsqldb.jdbcDriver</attribute>
+            <attribute name="ConnectionURL">jdbc:hsqldb:./db1/localDB</attribute>
+            <attribute name="UserName">sa</attribute>
+            <attribute name="Password"></attribute>
+        </service>
+        
+        <!-- JDBCドライバ経由でConnectionを取得するConnectionFactoryサービス -->
+        <service name="ConnectionFactory2"
+                 code="jp.ossc.nimbus.service.connection.JDBCConnectionFactoryService">
+            <attribute name="DriverName">org.hsqldb.jdbcDriver</attribute>
+            <attribute name="ConnectionURL">jdbc:hsqldb:./db2/localDB</attribute>
+            <attribute name="UserName">sa</attribute>
+            <attribute name="Password"></attribute>
+        </service>
+        
+        <!-- データベースを同期するTransactionSynchronizerサービス -->
+        <service name="TransactionSynchronizer"
+                 code="jp.ossc.nimbus.service.connection.TransactionSynchronizerService">
+            
+            <!-- 同期元のデータベースのConnectionFactoryサービス名を設定する -->
+            <attribute name="SourceConnectionFactoryServiceName">#ConnectionFactory1</attribute>
+            
+            <!-- 同期先のデータベースのConnectionFactoryサービス名を設定する -->
+            <attribute name="DestinationConnectionFactoryServiceName">#ConnectionFactory2</attribute>
+        </service>
+        
+        <service name="Sequence"
+                 code="jp.ossc.nimbus.service.sequence.StringSequenceService">
+            <attribute name="format">TIME_SEQ(yyyyMMddHHmmss,3)</attribute>
+        </service>
+        
+    </manager>
+    
+</server>

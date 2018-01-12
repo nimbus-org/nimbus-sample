@@ -1,0 +1,424 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE flows PUBLIC
+  "-//Nimbus//DTD Nimbus Bean Flow 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/beanflow_1_0.dtd">
+
+<flows>
+    
+    <!-- テーブル作成フロー -->
+    <flow name="CreateTable">
+        
+        <!-- JDBC接続のリソース宣言 -->
+        <resource name="Connection" service="Nimbus#JDBCTransactionResourceFactory"/>
+        
+        <step>
+            <target>
+                <static-field-ref code="java.lang.System" name="out"/>
+            </target>
+            <invoke name="println">
+                <argument>****テーブル作成フロー開始****</argument>
+            </invoke>
+        </step>
+        
+        <!-- Statement生成ステップ -->
+        <step name="CreateStatement">
+            <target>
+                <resource-ref>Connection</resource-ref>
+            </target>
+            <result>
+                <invoke name="createStatement"/>
+            </result>
+        </step>
+        
+        <!-- テーブル作成SQL実行ステップ -->
+        <step name="ExecuteQuery">
+            <target>
+                <step-ref>CreateStatement</step-ref>
+            </target>
+            <invoke name="executeQuery">
+                <argument>create table myuser(name varchar(100), age integer, sex char(1))</argument>
+            </invoke>
+        </step>
+        
+        <finally>
+            <step>
+                <target>
+                    <static-field-ref code="java.lang.System" name="out"/>
+                </target>
+                <invoke name="println">
+                    <argument>****テーブル作成フロー終了****</argument>
+                </invoke>
+            </step>
+        </finally>
+    </flow>
+    
+    <!-- レコード作成フロー -->
+    <flow name="Insert">
+        
+        <!-- JDBC接続のリソース宣言 -->
+        <resource name="Connection" service="Nimbus#JDBCTransactionResourceFactory"/>
+        
+        <step>
+            <target>
+                <static-field-ref code="java.lang.System" name="out"/>
+            </target>
+            <invoke name="println">
+                <argument>****レコード作成フロー開始****</argument>
+            </invoke>
+        </step>
+        
+        <!-- PreparedStatement生成ステップ -->
+        <step name="PreparedStatement">
+            <target>
+                <resource-ref>Connection</resource-ref>
+            </target>
+            <result>
+                <invoke name="prepareStatement">
+                    <argument>insert into myuser(name, age, sex) values(?, ?, ?)</argument>
+                </invoke>
+            </result>
+        </step>
+        
+        <!-- レコード作成ループ -->
+        <for var="record">
+            <target>
+                <input/>
+            </target>
+            
+            <!-- レコード作成SQL実行ステップ -->
+            <step name="Insert">
+                <target>
+                    <step-ref>PreparedStatement</step-ref>
+                </target>
+                <attribute name="String[1]">
+                    <var>record(name)</var>
+                </attribute>
+                <attribute name="Int[2]">
+                    <var>record(age)</var>
+                </attribute>
+                <attribute name="String[3]">
+                    <var>record(sex)</var>
+                </attribute>
+                <invoke name="executeUpdate"/>
+            </step>
+        </for>
+        
+        <finally>
+            <step>
+                <target>
+                    <static-field-ref code="java.lang.System" name="out"/>
+                </target>
+                <invoke name="println">
+                    <argument>****レコード作成フロー終了****</argument>
+                </invoke>
+            </step>
+        </finally>
+    </flow>
+    
+    <!-- レコード検索フロー -->
+    <flow name="Search">
+        
+        <step>
+            <target>
+                <static-field-ref code="java.lang.System" name="out"/>
+            </target>
+            <invoke name="println">
+                <argument>****レコード検索フロー開始****</argument>
+            </invoke>
+        </step>
+        
+        <!-- 子フロー選択スイッチ -->
+        <switch>
+            
+            <!-- 入力がない場合、全検索 -->
+            <case test="@input@ == null">
+                <callflow name="SearchAll"/>
+            </case>
+            
+            <!-- 入力がある場合、ユーザ指定検索 -->
+            <default>
+                <callflow name="SearchOne">
+                    <argument>
+                        <input/>
+                    </argument>
+                </callflow>
+            </default>
+            
+        </switch>
+        
+        <finally>
+            <step>
+                <target>
+                    <static-field-ref code="java.lang.System" name="out"/>
+                </target>
+                <invoke name="println">
+                    <argument>****レコード検索フロー終了****</argument>
+                </invoke>
+            </step>
+        </finally>
+    </flow>
+    
+    <!-- レコード全検索フロー -->
+    <flow name="SearchAll">
+        
+        <step>
+            <target>
+                <static-field-ref code="java.lang.System" name="out"/>
+            </target>
+            <invoke name="println">
+                <argument>****レコード全検索フロー開始****</argument>
+            </invoke>
+        </step>
+        
+        <!-- JDBC接続のリソース宣言 -->
+        <resource name="Connection" service="Nimbus#JDBCTransactionResourceFactory"/>
+        
+        <!-- Statement生成ステップ -->
+        <step name="CreateStatement">
+            <target>
+                <resource-ref>Connection</resource-ref>
+            </target>
+            <result>
+                <invoke name="createStatement"/>
+            </result>
+        </step>
+        
+        <!-- 全検索SQL実行ステップ -->
+        <step name="Select">
+            <target>
+                <step-ref>CreateStatement</step-ref>
+            </target>
+            <result>
+                <invoke name="executeQuery">
+                    <argument>select * from myuser</argument>
+                </invoke>
+            </result>
+        </step>
+        
+        <!-- 結果リスト生成ステップ -->
+        <step name="CreateRecords">
+            <target>
+                <object code="java.util.ArrayList"/>
+            </target>
+            <result>
+                <this/>
+            </result>
+        </step>
+        
+        <!-- 結果リスト格納ループ -->
+        <for var="resultSet" end="4">
+            <target>
+                <step-ref>Select</step-ref>
+            </target>
+            
+            <!-- 結果レコード生成ステップ -->
+            <step name="CreateRecord">
+                <target>
+                    <object code="java.util.HashMap"/>
+                </target>
+                <result>
+                    <this/>
+                </result>
+            </step>
+            
+            <!-- 結果レコード格納ステップ -->
+            <step name="SetRecord">
+                <target>
+                    <step-ref>CreateRecord</step-ref>
+                </target>
+                <attribute name="name">
+                    <var>resultSet.String(name)</var>
+                </attribute>
+                <attribute name="age">
+                    <var>resultSet.Int(age)</var>
+                </attribute>
+                <attribute name="sex">
+                    <var>resultSet.String(sex)</var>
+                </attribute>
+                <result>
+                    <this/>
+                </result>
+            </step>
+            
+            <!-- 結果リスト格納ステップ -->
+            <step name="AddRecord">
+                <target>
+                    <step-ref>CreateRecords</step-ref>
+                </target>
+                <invoke name="add">
+                    <argument type="java.lang.Object">
+                        <step-ref>SetRecord</step-ref>
+                    </argument>
+                </invoke>
+                <result>
+                    <this/>
+                </result>
+            </step>
+            
+        </for>
+        
+        <finally>
+            <step>
+                <target>
+                    <static-field-ref code="java.lang.System" name="out"/>
+                </target>
+                <invoke name="println">
+                    <argument>****レコード全検索フロー終了****</argument>
+                </invoke>
+            </step>
+        </finally>
+    </flow>
+    
+    <!-- 指定ユーザのレコード検索フロー -->
+    <flow name="SearchOne">
+        
+        <step>
+            <target>
+                <static-field-ref code="java.lang.System" name="out"/>
+            </target>
+            <invoke name="println">
+                <argument>****指定ユーザのレコード検索フロー開始****</argument>
+            </invoke>
+        </step>
+        
+        <!-- JDBC接続のリソース宣言 -->
+        <resource name="Connection" service="Nimbus#JDBCTransactionResourceFactory"/>
+        
+        <!-- PreparedStatement生成ステップ -->
+        <step name="PreparedStatement">
+            <target>
+                <resource-ref>Connection</resource-ref>
+            </target>
+            <result>
+                <invoke name="prepareStatement">
+                    <argument>select * from myuser where name=?</argument>
+                </invoke>
+            </result>
+        </step>
+        
+        <!-- ユーザ指定検索SQL実行ステップ -->
+        <step name="Select">
+            <target>
+                <step-ref>PreparedStatement</step-ref>
+            </target>
+            <attribute name="String[1]">
+                <input/>
+            </attribute>
+            <result>
+                <invoke name="executeQuery"/>
+            </result>
+        </step>
+        
+        <!-- 検索結果件数取得ステップ -->
+        <step name="Count">
+            <target>
+                <step-ref>Select</step-ref>
+            </target>
+            <result>
+                <invoke name="next"/>
+            </result>
+        </step>
+        
+        <!-- 検索結果件数判定 -->
+        <if test="@Count@ == false">
+            <step name="ReturnNull"/>
+            <return/>
+        </if>
+        
+        <!-- 結果レコード生成ステップ -->
+        <step name="CreateRecord">
+            <target>
+                <object code="java.util.HashMap"/>
+            </target>
+            <result>
+                <this/>
+            </result>
+        </step>
+        
+        <!-- 結果レコード格納ステップ -->
+        <step name="SetRecord">
+            <target>
+                <step-ref>CreateRecord</step-ref>
+            </target>
+            <attribute name="name">
+                <step-ref>Select.String(name)</step-ref>
+            </attribute>
+            <attribute name="age">
+                <step-ref>Select.Int(age)</step-ref>
+            </attribute>
+            <attribute name="sex">
+                <step-ref>Select.String(sex)</step-ref>
+            </attribute>
+            <result>
+                <this/>
+            </result>
+        </step>
+        
+        <finally>
+            <step>
+                <target>
+                    <static-field-ref code="java.lang.System" name="out"/>
+                </target>
+                <invoke name="println">
+                    <argument>****指定ユーザのレコード検索フロー終了****</argument>
+                </invoke>
+            </step>
+        </finally>
+    </flow>
+    
+    <!-- テーブル削除フロー -->
+    <flow name="DropTable">
+        
+        <step>
+            <target>
+                <static-field-ref code="java.lang.System" name="out"/>
+            </target>
+            <invoke name="println">
+                <argument>****テーブル削除フロー開始****</argument>
+            </invoke>
+        </step>
+        
+        <!-- JDBC接続のリソース宣言 -->
+        <resource name="Connection" service="Nimbus#JDBCTransactionResourceFactory"/>
+        
+        <!-- Statement生成ステップ -->
+        <step name="CreateStatement">
+            <target>
+                <resource-ref>Connection</resource-ref>
+            </target>
+            <result>
+                <invoke name="createStatement"/>
+            </result>
+        </step>
+        
+        <!-- テーブル削除SQL実行ステップ -->
+        <step name="ExecuteQuery">
+            <target>
+                <step-ref>CreateStatement</step-ref>
+            </target>
+            <invoke name="executeQuery">
+                <argument>drop table myuser</argument>
+            </invoke>
+        </step>
+        <catch var="e" exception="java.sql.SQLException">
+            <step>
+                <target>
+                    <var>e</var>
+                </target>
+                <invoke name="printStackTrace"/>
+            </step>
+        </catch>
+        
+        <finally>
+            <step>
+                <target>
+                    <static-field-ref code="java.lang.System" name="out"/>
+                </target>
+                <invoke name="println">
+                    <argument>****テーブル削除フロー終了****</argument>
+                </invoke>
+            </step>
+        </finally>
+    </flow>
+    
+</flows>

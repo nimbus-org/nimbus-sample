@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager shutdown-hook="true">
+        
+<ifdef name="Mode" value="Client">
+        
+        <!-- メッセージ受信サービス -->
+        <service name="MessageReceiver"
+                 code="jp.ossc.nimbus.service.publish.MessageReceiverService">
+            
+            <!-- クライアントコネクションファクトリが登録されているRMIサーバを参照するリポジトリサービスを設定する -->
+            <attribute name="JndiRepositoryServiceName">#RemoteRMIRepository</attribute>
+            
+            <!-- サービスの開始時に受信を開始するように設定する -->
+            <attribute name="StartReceiveOnStart">true</attribute>
+            
+            <!-- VMのシステムプロパティSubjectで指定したサブジェクトへのメッセージを受信するメッセージリスナを登録する -->
+            <invoke name="addMessageListener">
+                <argument type="jp.ossc.nimbus.service.publish.MessageListener">
+                    <object code="SampleMessageListener"/>
+                </argument>
+                <argument>${Subject}</argument>
+            </invoke>
+            
+            <depends>
+                <!-- RMIサーバを参照するリポジトリサービス -->
+                <service name="RemoteRMIRepository"
+                         code="jp.ossc.nimbus.service.repository.RMIRepositoryService">
+                    <attribute name="HostName">localhost</attribute>
+                    <attribute name="Port">1099</attribute>
+                </service>
+            </depends>
+        </service>
+        
+</ifdef>
+<ifdef name="Mode" value="Server">
+        
+        <!-- UDPコネクションファクトリサービス -->
+        <service name="ConnectionFactory"
+                 code="jp.ossc.nimbus.service.publish.udp.ConnectionFactoryService">
+            
+            <!-- クライアントコネクションファクトリを登録するRMIサーバリポジトリサービスを設定する -->
+            <attribute name="JndiRepositoryServiceName">#LocalRMIRepository</attribute>
+            
+            <!-- マルチキャストグループアドレスを設定する -->
+            <attribute name="MulticastGroupAddress">224.1.1.1</attribute>
+            
+            <!-- Java NIOを使用するように設定する -->
+            <attribute name="NIO">false</attribute>
+            
+            <depends>
+                <!-- RMIサーバに登録するリポジトリサービス -->
+                <service name="LocalRMIRepository"
+                         code="jp.ossc.nimbus.service.repository.RMIRepositoryService">
+                    <attribute name="CreateRegistry">true</attribute>
+                    <attribute name="Port">1099</attribute>
+                </service>
+            </depends>
+        </service>
+        
+</ifdef>
+        
+    </manager>
+    
+</server>

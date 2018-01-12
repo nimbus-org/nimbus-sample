@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- スケジューラサービス -->
+        <service name="Scheduler"
+                 code="jp.ossc.nimbus.service.scheduler.TimerSchedulerService">
+            
+            <!-- スケジューラの起動時にスケジュールを開始するかどうかを設定する -->
+            <attribute name="ScheduleOnStart">true</attribute>
+            
+            <!-- スケジュールサービスのサービス名を設定する -->
+            <attribute name="ScheduleServiceNames">
+                #Schedule1
+                #Schedule2
+                #Schedule3
+            </attribute>
+            
+            <depends>
+                
+                <!-- スケジュール１
+                 スケジューラ起動の1秒後に1度だけ実行するスケジュール
+                -->
+                <service name="Schedule1"
+                         code="jp.ossc.nimbus.service.scheduler.TimerScheduleService">
+                    
+                    <!-- スケジュール名を設定する -->
+                    <attribute name="Name">Task1</attribute>
+                    
+                    <!-- タスクを設定する -->
+                    <attribute name="Task">
+                        <object code="sample.task.SampleTask">
+                            <attribute name="Name">Task1</attribute>
+                        </object>
+                    </attribute>
+                    
+                    <!-- 遅延時間を設定する -->
+                    <attribute name="Delay">1000</attribute>
+                    
+                </service>
+                
+            </depends>
+            
+            <depends>
+                
+                <!-- スケジュール２
+                 スケジューラ起動直後に実行され、1秒間隔で実行され続けるスケジュール
+                -->
+                <service name="Schedule2"
+                         code="jp.ossc.nimbus.service.scheduler.TimerScheduleService">
+                    
+                    <!-- スケジュール名を設定する -->
+                    <attribute name="Name">Task2</attribute>
+                    
+                    <!-- タスクを設定する -->
+                    <attribute name="Task">
+                        <object code="sample.task.SampleTask">
+                            <attribute name="Name">Task2</attribute>
+                        </object>
+                    </attribute>
+                    
+                    <!-- 遅延時間を設定する -->
+                    <attribute name="Delay">0</attribute>
+                    
+                    <!-- 繰り返し間隔を設定する -->
+                    <attribute name="Period">1000</attribute>
+                    
+                </service>
+                
+            </depends>
+            
+            <depends>
+                
+                <!-- スケジュール３
+                 スケジューラ起動直後に実行され、1秒間隔で実行され続けるスケジュール
+                 但し、タスクの処理時間が1.5秒かかるため、結果として1.5秒間隔で実行される。
+                 また、非同期処理用のキューを設定しているため、他のスケジュールの実行には影響を及ぼさない。
+                -->
+                <service name="Schedule3"
+                         code="jp.ossc.nimbus.service.scheduler.TimerScheduleService">
+                    
+                    <!-- スケジュール名を設定する -->
+                    <attribute name="Name">Task3</attribute>
+                    
+                    <!-- タスクを設定する -->
+                    <attribute name="Task">
+                        <object code="sample.task.SampleTask">
+                            <attribute name="Name">Task3</attribute>
+                            <attribute name="ProcessTime">1500</attribute>
+                        </object>
+                    </attribute>
+                    
+                    <!-- 遅延時間を設定する -->
+                    <attribute name="Delay">0</attribute>
+                    
+                    <!-- 繰り返し間隔を設定する -->
+                    <attribute name="Period">1000</attribute>
+                    
+                    <!-- 非同期処理用のQueueサービスのサービス名を設定する -->
+                    <attribute name="QueueServiceName">Queue</attribute>
+                    
+                    <!-- 依存するスケジュールを設定する -->
+                    <attribute name="DependsScheduleNames">Task1</attribute>
+                    
+                    <depends>
+                        <!-- 非同期処理用のキューサービス -->
+                        <service name="Queue"
+                                 code="jp.ossc.nimbus.service.queue.DefaultQueueService"/>
+                    </depends>
+                </service>
+                
+            </depends>
+        </service>
+        
+    </manager>
+    
+</server>

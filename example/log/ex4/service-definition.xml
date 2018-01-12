@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- ログ出力を行うLoggerサービス -->
+        <service name="Log"
+                 code="jp.ossc.nimbus.service.log.LogService">
+            
+            <attribute name="DebugEnabled">true</attribute>
+            <attribute name="SystemDebugEnabled">true</attribute>
+            <attribute name="SystemInfoEnabled">true</attribute>
+            <attribute name="SystemWarnEnabled">true</attribute>
+            <attribute name="SystemErrorEnabled">true</attribute>
+            <attribute name="SystemFatalEnabled">true</attribute>
+            <attribute name="MessageRecordFactoryServiceName">#MyMessageRecordFactory</attribute>
+            <attribute name="DefaultWritableRecordFactoryServiceName">#MyWritableRecordFactory</attribute>
+            
+            <!-- フォーマットキー項目値の取得元となるContextサービスのサービス名を設定する -->
+            <attribute name="ContextServiceName">#Context</attribute>
+            
+            <!-- Contextサービスから取得するフォーマットキー項目名を設定する -->
+            <attribute name="ContextFormatKeys">
+                SYSTEM_NAME,
+                THREAD_NAME
+            </attribute>
+            
+            <depends>
+                <service name="MyMessageRecordFactory"
+                         code="jp.ossc.nimbus.service.message.MessageRecordFactoryService">
+                    <attribute name="MessageRecordClassName">jp.ossc.nimbus.service.log.LogMessageRecordImpl</attribute>
+                    <attribute name="MessageFiles">MyMessage1</attribute>
+                    <attribute name="SecretMode">true</attribute>
+                </service>
+            </depends>
+            
+            <depends>
+                
+                <!-- フォーマットを提供するWritableRecordFactoryサービス -->
+                <service name="MyWritableRecordFactory"
+                         code="jp.ossc.nimbus.service.log.LogWritableRecordFactoryService">
+                    
+                    <!-- フォーマットを設定する
+                        LogServiceが提供するキー項目に加えて、Contextサービスで
+                        静的に保持しているSYSTEM_NAME、Contextサービスに動的に
+                        設定されるTHREAD_NAMEを、キー項目として追加する。
+                    -->
+                    <attribute name="Format">[%DATE%][%SYSTEM_NAME%][%THREAD_NAME%][%PRIORITY%][%CODE%] %MESSAGE%</attribute>
+                    
+                    <!-- 日付フォーマットを指定する -->
+                    <attribute name="DateFormat">yy/MM/dd HH:mm:ss.SSS</attribute>
+                    
+                </service>
+                
+            </depends>
+            
+            <depends>#Context</depends>
+        </service>
+        
+        <!-- コンテキスト情報を提供するContextサービス -->
+        <service name="Context"
+                 code="jp.ossc.nimbus.service.context.DefaultContextService">
+            
+            <!-- 任意のキー&値を設定できる。
+              ログの静的なフォーマットキー項目として設定する。
+            -->
+            <attribute name="SYSTEM_NAME">SAMPLE</attribute>
+            
+        </service>
+        
+    </manager>
+    
+</server>

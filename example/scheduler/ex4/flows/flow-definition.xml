@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE flows PUBLIC
+  "-//Nimbus//DTD Nimbus Bean Flow 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/beanflow_1_0.dtd">
+
+<flows>
+    
+    <!-- スケジュールマスタフロー -->
+    <flow name="ScheduleMaster">
+        
+        <resource name="Connection" service="Nimbus#JDBCTransactionResourceFactory" trancontrol="true"/>
+        
+        <switch>
+            <case test="@input@ == 'Create'">
+                <callflow name="DropScheduleMaster"/>
+                <step name="CreateTableStatement">
+                    <target>
+                        <resource-ref>Connection</resource-ref>
+                    </target>
+                    <result>
+                        <invoke name="createStatement"/>
+                    </result>
+                </step>
+                <step>
+                    <target>
+                        <step-ref>CreateTableStatement</step-ref>
+                    </target>
+                    <invoke name="executeQuery">
+                        <argument>create table SCHEDULE_MST(NAME VARCHAR(100), FLOW VARCHAR(100),STARTTIME TIMESTAMP, ENDTIME TIMESTAMP, DELAY BIGINT, PERIODINTERVAL BIGINT, EXECCOUNT INT, EXEC_OVER_STARTTIME_FLG BOOLEAN, FIXEDRATE_FLG BOOLEAN, DEPENDS VARCHAR(1000), WAIT_TIMEOUT BIGINT, CHECK_INATERVAL BIGINT, QUEUENAME VARCHAR(100), GARBAGE_QUEUE BOOLEAN)</argument>
+                    </invoke>
+                </step>
+                <step>
+                    <target>
+                        <step-ref>CreateTableStatement</step-ref>
+                    </target>
+                    <invoke name="executeQuery">
+                        <argument>create table SCHEDULE_STATE(NAME VARCHAR(100), STATE INT,UPDATETIME TIMESTAMP)</argument>
+                    </invoke>
+                </step>
+                <step name="InsertStatement">
+                    <target>
+                        <resource-ref>Connection</resource-ref>
+                    </target>
+                    <result>
+                        <invoke name="prepareStatement">
+                            <argument>insert into SCHEDULE_MST(NAME, FLOW,STARTTIME, ENDTIME, DELAY, PERIODINTERVAL, EXECCOUNT, EXEC_OVER_STARTTIME_FLG, FIXEDRATE_FLG, DEPENDS, WAIT_TIMEOUT, CHECK_INATERVAL, QUEUENAME, GARBAGE_QUEUE) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)</argument>
+                        </invoke>
+                    </result>
+                </step>
+                <step name="CurrentTime">
+                    <result>
+                        <static-invoke code="java.lang.System" name="currentTimeMillis"/>
+                    </result>
+                </step>
+                <step>
+                    <target>
+                        <static-field-ref code="java.lang.System" name="out"/>
+                    </target>
+                    <invoke name="print">
+                        <argument>**** スケジュール開始時間：</argument>
+                    </invoke>
+                    <invoke name="println">
+                        <argument type="java.lang.Object">
+                            <object code="java.util.Date">
+                                <constructor>
+                                    <argument type="long"><step-ref>CurrentTime</step-ref></argument>
+                                </constructor>
+                            </object>
+                        </argument>
+                    </invoke>
+                </step>
+                
+                <!-- スケジュール１を登録 -->
+                <step>
+                    <target>
+                        <step-ref>InsertStatement</step-ref>
+                    </target>
+                    <attribute name="String[1]">Schedule1</attribute>
+                    <attribute name="String[2]">Task1</attribute>
+                    <attribute name="Timestamp[3]">
+                        <object code="java.sql.Timestamp">
+                            <constructor>
+                                <argument type="long"><step-ref>CurrentTime</step-ref></argument>
+                            </constructor>
+                        </object>
+                    </attribute>
+                    <attribute name="Null[4]"><static-field-ref code="java.sql.Types" name="TIMESTAMP"/></attribute>
+                    <attribute name="Long[5]">1000</attribute>
+                    <attribute name="Null[6]"><static-field-ref code="java.sql.Types" name="BIGINT"/></attribute>
+                    <attribute name="Null[7]"><static-field-ref code="java.sql.Types" name="INTEGER"/></attribute>
+                    <attribute name="Boolean[8]">true</attribute>
+                    <attribute name="Null[9]"><static-field-ref code="java.sql.Types" name="BOOLEAN"/></attribute>
+                    <attribute name="Null[10]"><static-field-ref code="java.sql.Types" name="VARCHAR"/></attribute>
+                    <attribute name="Null[11]"><static-field-ref code="java.sql.Types" name="BIGINT"/></attribute>
+                    <attribute name="Null[12]"><static-field-ref code="java.sql.Types" name="BIGINT"/></attribute>
+                    <attribute name="String[13]">Nimbus#Queue</attribute>
+                    <attribute name="Null[14]"><static-field-ref code="java.sql.Types" name="BOOLEAN"/></attribute>
+                    <invoke name="executeUpdate"/>
+                </step>
+                
+                <!-- スケジュール２を登録 -->
+                <step>
+                    <target>
+                        <step-ref>InsertStatement</step-ref>
+                    </target>
+                    <attribute name="String[1]">Schedule2</attribute>
+                    <attribute name="String[2]">Task2</attribute>
+                    <attribute name="Timestamp[3]">
+                        <object code="java.sql.Timestamp">
+                            <constructor>
+                                <argument type="long"><step-ref>CurrentTime</step-ref></argument>
+                            </constructor>
+                        </object>
+                    </attribute>
+                    <attribute name="Null[4]"><static-field-ref code="java.sql.Types" name="TIMESTAMP"/></attribute>
+                    <attribute name="Null[5]"><static-field-ref code="java.sql.Types" name="BIGINT"/></attribute>
+                    <attribute name="Null[6]"><static-field-ref code="java.sql.Types" name="BIGINT"/></attribute>
+                    <attribute name="Null[7]"><static-field-ref code="java.sql.Types" name="INTEGER"/></attribute>
+                    <attribute name="Boolean[8]">true</attribute>
+                    <attribute name="Null[9]"><static-field-ref code="java.sql.Types" name="BOOLEAN"/></attribute>
+                    <attribute name="String[10]">Schedule1</attribute>
+                    <attribute name="Long[11]">10000</attribute>
+                    <attribute name="Long[12]">200</attribute>
+                    <attribute name="String[13]">Nimbus#Queue</attribute>
+                    <attribute name="Null[14]"><static-field-ref code="java.sql.Types" name="BOOLEAN"/></attribute>
+                    <invoke name="executeUpdate"/>
+                </step>
+                
+                <!-- スケジュール３を登録 -->
+                <step>
+                    <target>
+                        <step-ref>InsertStatement</step-ref>
+                    </target>
+                    <attribute name="String[1]">Schedule3</attribute>
+                    <attribute name="String[2]">Task3</attribute>
+                    <attribute name="Timestamp[3]">
+                        <object code="java.sql.Timestamp">
+                            <constructor>
+                                <argument type="long"><step-ref>CurrentTime</step-ref></argument>
+                            </constructor>
+                        </object>
+                    </attribute>
+                    <attribute name="Null[4]"><static-field-ref code="java.sql.Types" name="TIMESTAMP"/></attribute>
+                    <attribute name="Null[5]"><static-field-ref code="java.sql.Types" name="BIGINT"/></attribute>
+                    <attribute name="Long[6]">1000</attribute>
+                    <attribute name="Int[7]">5</attribute>
+                    <attribute name="Boolean[8]">true</attribute>
+                    <attribute name="Boolean[9]">true</attribute>
+                    <attribute name="Null[10]"><static-field-ref code="java.sql.Types" name="VARCHAR"/></attribute>
+                    <attribute name="Null[11]"><static-field-ref code="java.sql.Types" name="BIGINT"/></attribute>
+                    <attribute name="Null[12]"><static-field-ref code="java.sql.Types" name="BIGINT"/></attribute>
+                    <attribute name="String[13]">Nimbus#Queue</attribute>
+                    <attribute name="Null[14]"><static-field-ref code="java.sql.Types" name="BOOLEAN"/></attribute>
+                    <invoke name="executeUpdate"/>
+                </step>
+                
+                <!-- スケジュール４を登録 -->
+                <step>
+                    <target>
+                        <step-ref>InsertStatement</step-ref>
+                    </target>
+                    <attribute name="String[1]">Schedule4</attribute>
+                    <attribute name="String[2]">Task4</attribute>
+                    <attribute name="Timestamp[3]">
+                        <object code="java.sql.Timestamp">
+                            <constructor>
+                                <argument type="long"><step-ref>CurrentTime</step-ref></argument>
+                            </constructor>
+                        </object>
+                    </attribute>
+                    <attribute name="Timestamp[4]">
+                        <object code="java.sql.Timestamp">
+                            <constructor>
+                                <argument type="long">
+                                    <expression>@CurrentTime@ + 5000</expression>
+                                </argument>
+                            </constructor>
+                        </object>
+                    </attribute>
+                    <attribute name="Null[5]"><static-field-ref code="java.sql.Types" name="BIGINT"/></attribute>
+                    <attribute name="Long[6]">2000</attribute>
+                    <attribute name="Null[7]"><static-field-ref code="java.sql.Types" name="INTEGER"/></attribute>
+                    <attribute name="Boolean[8]">true</attribute>
+                    <attribute name="Boolean[9]">true</attribute>
+                    <attribute name="Null[10]"><static-field-ref code="java.sql.Types" name="VARCHAR"/></attribute>
+                    <attribute name="Null[11]"><static-field-ref code="java.sql.Types" name="BIGINT"/></attribute>
+                    <attribute name="Null[12]"><static-field-ref code="java.sql.Types" name="BIGINT"/></attribute>
+                    <attribute name="String[13]">Nimbus#Queue</attribute>
+                    <attribute name="Boolean[14]">true</attribute>
+                    <invoke name="executeUpdate"/>
+                </step>
+            </case>
+            <case test="@input@ == 'Drop'">
+                <step name="SelectStatement">
+                    <target>
+                        <resource-ref>Connection</resource-ref>
+                    </target>
+                    <result>
+                        <invoke name="createStatement"/>
+                    </result>
+                </step>
+                <step name="ResultSet">
+                    <target>
+                        <step-ref>SelectStatement</step-ref>
+                    </target>
+                    <result>
+                        <invoke name="executeQuery">
+                                <argument>select NAME, STATE, UPDATETIME from SCHEDULE_STATE order by NAME</argument>
+                        </invoke>
+                    </result>
+                </step>
+                <for var="record">
+                    <target><step-ref>ResultSet</step-ref></target>
+                    <step>
+                        <target>
+                            <static-field-ref code="java.lang.System" name="out"/>
+                        </target>
+                        <invoke name="print">
+                            <argument><var>record.String[1]</var></argument>
+                        </invoke>
+                        <invoke name="print">
+                            <argument>,</argument>
+                        </invoke>
+                        <invoke name="print">
+                            <argument type="int"><var>record.Int[2]</var></argument>
+                        </invoke>
+                        <invoke name="print">
+                            <argument>,</argument>
+                        </invoke>
+                        <invoke name="println">
+                            <argument type="java.lang.Object"><var>record.Timestamp[3]</var></argument>
+                        </invoke>
+                    </step>
+                </for>
+                <callflow name="DropScheduleMaster"/>
+            </case>
+        </switch>
+    </flow>
+    
+    <!-- スケジュールマスタ削除フロー -->
+    <flow name="DropScheduleMaster">
+        
+        <resource name="Connection" service="Nimbus#JDBCTransactionResourceFactory" trancontrol="true"/>
+        
+        <step name="DropStatement">
+            <target>
+                <resource-ref>Connection</resource-ref>
+            </target>
+            <result>
+                <invoke name="createStatement"/>
+            </result>
+        </step>
+        <step>
+            <target>
+                <step-ref>DropStatement</step-ref>
+            </target>
+            <invoke name="executeQuery">
+                <argument>drop table SCHEDULE_MST</argument>
+            </invoke>
+            <catch exception="java.sql.SQLException"/>
+        </step>
+        <step>
+            <target>
+                <step-ref>DropStatement</step-ref>
+            </target>
+            <invoke name="executeQuery">
+                <argument>drop table SCHEDULE_STATE</argument>
+            </invoke>
+            <catch exception="java.sql.SQLException"/>
+        </step>
+    </flow>
+    
+    
+    <!-- タスク1 -->
+    <flow name="Task1">
+        <step>
+            <target>
+                <static-field-ref code="java.lang.System" name="out"/>
+            </target>
+            <invoke name="print">
+                <argument>**** タスク1 開始 スケジュール開始時刻から1秒後に実行（処理時間200ms) : </argument>
+            </invoke>
+            <invoke name="println">
+                <argument type="java.lang.Object"><object code="java.util.Date"/></argument>
+            </invoke>
+            <static-invoke code="java.lang.Thread" name="sleep">
+                <argument type="long">200</argument>
+            </static-invoke>
+            <invoke name="print">
+                <argument>**** タスク1 終了：</argument>
+            </invoke>
+            <invoke name="println">
+                <argument type="java.lang.Object"><object code="java.util.Date"/></argument>
+            </invoke>
+        </step>
+    </flow>
+    
+    <!-- タスク2 -->
+    <flow name="Task2">
+        <step>
+            <target>
+                <static-field-ref code="java.lang.System" name="out"/>
+            </target>
+            <invoke name="print">
+                <argument>**** タスク2 開始 タスク１が終了したら実行（処理時間3秒)：</argument>
+            </invoke>
+            <invoke name="println">
+                <argument type="java.lang.Object"><object code="java.util.Date"/></argument>
+            </invoke>
+            <static-invoke code="java.lang.Thread" name="sleep">
+                <argument type="long">3000</argument>
+            </static-invoke>
+            <invoke name="print">
+                <argument>**** タスク2 終了：</argument>
+            </invoke>
+            <invoke name="println">
+                <argument type="java.lang.Object"><object code="java.util.Date"/></argument>
+            </invoke>
+        </step>
+    </flow>
+    
+    <!-- タスク3 -->
+    <flow name="Task3">
+        <step>
+            <target>
+                <static-field-ref code="java.lang.System" name="out"/>
+            </target>
+            <invoke name="print">
+                <argument>**** タスク3 開始 1秒間隔で5回繰り返し実行（処理時間500ms 固定頻度実行）：</argument>
+            </invoke>
+            <invoke name="println">
+                <argument type="java.lang.Object"><object code="java.util.Date"/></argument>
+            </invoke>
+            <static-invoke code="java.lang.Thread" name="sleep">
+                <argument type="long">500</argument>
+            </static-invoke>
+            <invoke name="print">
+                <argument>**** タスク3 終了：</argument>
+            </invoke>
+            <invoke name="println">
+                <argument type="java.lang.Object"><object code="java.util.Date"/></argument>
+            </invoke>
+        </step>
+    </flow>
+    
+    <!-- タスク4 -->
+    <flow name="Task4">
+        <step>
+            <target>
+                <static-field-ref code="java.lang.System" name="out"/>
+            </target>
+            <invoke name="print">
+                <argument>**** タスク4 開始 2秒間隔で5秒間繰り返し実行（処理時間4秒）：</argument>
+            </invoke>
+            <invoke name="println">
+                <argument type="java.lang.Object"><object code="java.util.Date"/></argument>
+            </invoke>
+            <static-invoke code="java.lang.Thread" name="sleep">
+                <argument type="long">4000</argument>
+            </static-invoke>
+            <invoke name="print">
+                <argument>**** タスク4 終了：</argument>
+            </invoke>
+            <invoke name="println">
+                <argument type="java.lang.Object"><object code="java.util.Date"/></argument>
+            </invoke>
+            <catch exception="java.lang.InterruptedException"/>
+        </step>
+    </flow>
+    
+</flows>

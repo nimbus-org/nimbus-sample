@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- フォーマットと出力先をまとめるCategoryサービス -->
+        <service name="Category"
+                 code="jp.ossc.nimbus.service.writer.SimpleCategoryService">
+            
+            <!-- WritableRecordFactoryサービスのサービス名を設定する -->
+            <attribute name="WritableRecordFactoryServiceName">#WritableRecordFactory</attribute>
+            
+            <!-- MessageWriterサービスのサービス名を設定する -->
+            <attribute name="MessageWriterServiceName">#Writer</attribute>
+            
+            <depends>
+                <!-- 出力情報をフォーマットするWritableRecordFactoryサービス
+                  MapからフォーマットしてMessageWriterの入力であるWritableRecordを生成する
+                -->
+                <service name="WritableRecordFactory"
+                         code="jp.ossc.nimbus.service.writer.WritableRecordFactoryService">
+                    <attribute name="Format">%DATE% : %MESSAGE%</attribute>
+                    <attribute name="ImplementClasses">
+                        DATE=jp.ossc.nimbus.service.writer.DateElement
+                    </attribute>
+                </service>
+            </depends>
+            
+            <depends>
+                <!-- コンソールに出力するMessageWriterサービス -->
+                <service name="Writer"
+                         code="jp.ossc.nimbus.service.writer.ConsoleWriterService"/>
+            </depends>
+            
+        </service>
+        
+    </manager>
+    
+</server>

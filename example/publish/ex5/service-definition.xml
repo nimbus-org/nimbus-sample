@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+<ifdef name="Mode" value="Client">
+        
+        <!-- メッセージ受信サービス -->
+        <service name="MessageReceiver"
+                 code="jp.ossc.nimbus.service.publish.MessageReceiverService">
+            
+            <!-- クライアントコネクションファクトリのサービス名を設定する -->
+            <attribute name="ClientConnectionFactoryServiceName">#ClusterClientConnectionFactory</attribute>
+            
+            <!-- サービスの開始時に受信を開始するように設定する -->
+            <attribute name="StartReceiveOnStart">true</attribute>
+            
+            <!-- サブジェクト hoge へのメッセージを受信するメッセージリスナを登録する -->
+            <invoke name="addMessageListener">
+                <argument type="jp.ossc.nimbus.service.publish.MessageListener">
+                    <object code="SampleMessageListener"/>
+                </argument>
+                <argument>hoge</argument>
+            </invoke>
+            
+            <depends>#ClusterClientConnectionFactory</depends>
+        </service>
+        
+        <!-- クラスタクライアントコネクションファクトリサービス -->
+        <service name="ClusterClientConnectionFactory"
+                 code="jp.ossc.nimbus.service.publish.ClusterClientConnectionFactoryService">
+            
+            <!-- クラスタサービスを設定する -->
+            <attribute name="ClusterServiceName">#Cluster</attribute>
+            
+            <attribute name="FlexibleConnect">true</attribute>
+            <depends>
+                <!-- クラスタサービス -->
+                <service name="Cluster"
+                         code="jp.ossc.nimbus.service.keepalive.ClusterService">
+                    
+                    <!-- バインドアドレスを設定する -->
+                    <attribute name="BindAddress">0.0.0.0</attribute>
+                    
+                    <!-- マルチキャストアドレスを設定する -->
+                    <attribute name="MulticastGroupAddress">224.1.1.1</attribute>
+                    
+                    <!-- クラスタにクライアントとして参加するように設定する -->
+                    <attribute name="Client">true</attribute>
+                    
+                    <!-- ハートビートのリトライ回数に設定する -->
+                    <attribute name="HeartBeatRetryCount">2</attribute>
+                    
+                    <!-- ユニキャストポートを匿名ポートに設定する -->
+                    <attribute name="AnonymousUnicastPort">true</attribute>
+                </service>
+            </depends>
+        </service>
+        
+</ifdef>
+<ifdef name="Mode" value="Server">
+    
+        <!-- クラスタコネクションファクトリサービス -->
+        <service name="ClusterConnectionFactory"
+                 code="jp.ossc.nimbus.service.publish.ClusterConnectionFactoryService">
+            
+            <!-- クラスタを組むクライアントコネクションファクトリサービスを設定する -->
+            <attribute name="ClientConnectionFactoryServiceName">#ConnectionFactory</attribute>
+            
+            <!-- クラスタサービスを設定する -->
+            <attribute name="ClusterServiceName">#Cluster</attribute>
+            <depends>ConnectionFactory</depends>
+            <depends>
+                <!-- クラスタサービス -->
+                <service name="Cluster"
+                         code="jp.ossc.nimbus.service.keepalive.ClusterService">
+                    
+                    <!-- バインドアドレスを設定する -->
+                    <attribute name="BindAddress">0.0.0.0</attribute>
+                    
+                    <!-- マルチキャストアドレスを設定する -->
+                    <attribute name="MulticastGroupAddress">224.1.1.1</attribute>
+                    
+                    <!-- サービスの開始時にクラスタに参加しないように設定する -->
+                    <attribute name="JoinOnStart">false</attribute>
+                    
+                    <!-- ハートビートのリトライ回数に設定する -->
+                    <attribute name="HeartBeatRetryCount">2</attribute>
+                    
+                    <!-- ユニキャストポートを匿名ポートに設定する -->
+                    <attribute name="AnonymousUnicastPort">true</attribute>
+                </service>
+            </depends>
+        </service>
+        
+        <!-- UDPコネクションファクトリサービス -->
+        <service name="ConnectionFactory"
+                 code="jp.ossc.nimbus.service.publish.udp.ConnectionFactoryService">
+            <attribute name="MulticastGroupAddress">224.1.1.2</attribute>
+        </service>
+        
+</ifdef>
+        
+    </manager>
+    
+</server>

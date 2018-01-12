@@ -1,0 +1,8 @@
+import java.util.*;
+
+int randomValue = new Random().nextInt();
+
+// サービス定義でインジェクションしたlog変数を使ってログ出力する。
+log.write("WARN", "Random : " + randomValue);
+
+return randomValue;

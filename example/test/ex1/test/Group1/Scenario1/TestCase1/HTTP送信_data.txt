@@ -1,0 +1,2 @@
+param1=hoge
+param2=fuga

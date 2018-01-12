@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+<ifdef name="Mode" value="Client">
+        
+        <!-- メッセージ受信サービス -->
+        <service name="MessageReceiver"
+                 code="jp.ossc.nimbus.service.publish.MessageReceiverService">
+            
+            <!-- クライアントコネクションファクトリが登録されているRMIサーバを参照するリポジトリサービスを設定する -->
+            <attribute name="JndiRepositoryServiceName">#RemoteRMIRepository</attribute>
+            
+            <!-- サービスの開始時に受信を開始するように設定する -->
+            <attribute name="StartReceiveOnStart">true</attribute>
+            
+            <!-- VMのシステムプロパティSubjectで指定したサブジェクトへのメッセージを受信するメッセージリスナを登録する -->
+            <invoke name="addMessageListener">
+                <argument type="jp.ossc.nimbus.service.publish.MessageListener">
+                    <object code="SampleMessageListener"/>
+                </argument>
+                <argument>${Subject}</argument>
+            </invoke>
+            
+            <depends>
+                <!-- RMIサーバを参照するリポジトリサービス -->
+                <service name="RemoteRMIRepository"
+                         code="jp.ossc.nimbus.service.repository.RMIRepositoryService">
+                    <attribute name="HostName">localhost</attribute>
+                    <attribute name="Port">1099</attribute>
+                </service>
+            </depends>
+        </service>
+        
+</ifdef>
+<ifdef name="Mode" value="Server">
+        
+        <!-- グループコネクションファクトリサービス -->
+        <service name="ConnectionFactory"
+                 code="jp.ossc.nimbus.service.publish.GroupConnectionFactoryService">
+            
+            <!-- クライアントコネクションファクトリを登録するRMIサーバリポジトリサービスを設定する -->
+            <attribute name="JndiRepositoryServiceName">#LocalRMIRepository</attribute>
+            
+            <!-- サブジェクト hoge への配信を行うコネクションファクトリを設定する -->
+            <invoke name="addSubjectMapping">
+                <argument>
+                    <object code="jp.ossc.nimbus.service.publish.GroupConnectionFactoryService$SubjectMapping">
+                        
+                        <!-- 関連付けるサブジェクトを設定する -->
+                        <attribute name="Subject">hoge</attribute>
+                        
+                        <!-- クライアントコネクションファクトリを設定する -->
+                        <attribute name="ClientConnectionFactoryServiceName">#ConnectionFactory1</attribute>
+                        
+                        <!-- サーバコネクションファクトリを設定する -->
+                        <attribute name="ServerConnectionFactoryServiceName">#ConnectionFactory1</attribute>
+                    </object>
+                </argument>
+            </invoke>
+            
+            <!-- サブジェクト fuga への配信を行うコネクションファクトリを設定する -->
+            <invoke name="addSubjectMapping">
+                <argument>
+                    <object code="jp.ossc.nimbus.service.publish.GroupConnectionFactoryService$SubjectMapping">
+                        
+                        <!-- 関連付けるサブジェクトを設定する -->
+                        <attribute name="Subject">fuga</attribute>
+                        
+                        <!-- クライアントコネクションファクトリを設定する -->
+                        <attribute name="ClientConnectionFactoryServiceName">#ConnectionFactory2</attribute>
+                        
+                        <!-- サーバコネクションファクトリを設定する -->
+                        <attribute name="ServerConnectionFactoryServiceName">#ConnectionFactory2</attribute>
+                    </object>
+                </argument>
+            </invoke>
+            
+            <depends>ConnectionFactory1</depends>
+            <depends>ConnectionFactory2</depends>
+            <depends>
+                <!-- RMIサーバに登録するリポジトリサービス -->
+                <service name="LocalRMIRepository"
+                         code="jp.ossc.nimbus.service.repository.RMIRepositoryService">
+                    <attribute name="CreateRegistry">true</attribute>
+                    <attribute name="Port">1099</attribute>
+                </service>
+            </depends>
+        </service>
+        
+        <!-- TCPコネクションファクトリサービス1 -->
+        <service name="ConnectionFactory1"
+                 code="jp.ossc.nimbus.service.publish.tcp.ConnectionFactoryService">
+            <attribute name="NIO">true</attribute>
+        </service>
+        
+        <!-- UDPコネクションファクトリサービス2 -->
+        <service name="ConnectionFactory2"
+                 code="jp.ossc.nimbus.service.publish.udp.ConnectionFactoryService">
+            <attribute name="MulticastGroupAddress">224.1.1.1</attribute>
+            <attribute name="NIO">true</attribute>
+        </service>
+        
+</ifdef>
+        
+    </manager>
+    
+</server>

@@ -1,0 +1,2 @@
+ASPECT_001,例外が発生しました。,150,jp.ossc.nimbus.service.log.SYSTEM_ERROR_CATEGORY
+ASPECT_002,例外を握り潰しました。,100,jp.ossc.nimbus.service.log.SYSTEM_WARN_CATEGORY

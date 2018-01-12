@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server>
+
+<!-- ===================================================================== -->
+<!--                                                                       -->
+<!--  Nimbus Service Configuration                                       -->
+<!--                                                                       -->
+<!-- ===================================================================== -->
+
+<server>
+    
+    <!-- NimbusのサービスローダをJBossのサービスとして定義する -->
+    <mbean name="Nimbus:class=jp.ossc.nimbus.core.DefaultServiceLoaderService,service=InterpreterLoaderService"
+           code="jp.ossc.nimbus.core.DefaultServiceLoaderService">
+        
+        <!-- サービス定義ファイルのパスを設定する -->
+        <attribute name="ServicePath">service-definition.xml</attribute>
+        
+        <!-- サービス定義ファイルの検証を行うかを設定する -->
+        <attribute name="Validate">true</attribute>
+        
+        <!-- サービス定義ファイルのロードが正常に終了したかチェックするかを設定する -->
+        <attribute name="CheckLoadManagerCompleted">true</attribute>
+        
+    </mbean>
+    
+</server>

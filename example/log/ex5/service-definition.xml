@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- ログ出力を行うLoggerサービス -->
+        <service name="Log"
+                 code="jp.ossc.nimbus.service.log.LogService">
+            
+            <attribute name="MessageRecordFactoryServiceName">#MyMessageRecordFactory</attribute>
+            
+            <!-- ログ出力先となるCategoryサービスのサービス名を設定する -->
+            <attribute name="CategoryServiceNames">#MyCategory</attribute>
+            
+            <depends>
+                <service name="MyMessageRecordFactory"
+                         code="jp.ossc.nimbus.service.message.MessageRecordFactoryService">
+                    <attribute name="MessageRecordClassName">jp.ossc.nimbus.service.log.LogMessageRecordImpl</attribute>
+                    <attribute name="MessageFiles">MyMessage1</attribute>
+                    <attribute name="SecretMode">true</attribute>
+                </service>
+            </depends>
+            
+            <depends>
+                
+                <!-- ログ出力先となるCategoryサービス -->
+                <service name="MyCategory"
+                         code="jp.ossc.nimbus.service.log.SimpleCategoryService">
+                    
+                    <!-- カテゴリ名を設定する -->
+                    <attribute name="CategoryName">Sample</attribute>
+                    
+                    <!-- 有効なプライオリティ数値の範囲を設定する -->
+                    <attribute name="PriorityRange">0:49</attribute>
+                    
+                    <!-- プライオリティ数値に対するラベルを設定する。
+                      プライオリティ数値範囲最小値:プライオリティ数値範囲最大値=ラベル
+                      のフォーマットで複数指定する。
+                    -->
+                    <attribute name="Labels">
+                        0:9=DEBUG
+                        10:19=INFO
+                        20:29=WARN
+                        30:39=ERROR
+                        40:49=FATAL
+                    </attribute>
+                    
+                    <!-- このカテゴリへの出力を行うMessageWriterサービスのサービス名を設定する -->
+                    <attribute name="MessageWriterServiceName">#ConsoleMessageWriter</attribute>
+                    
+                    <!-- このカテゴリへの出力フォーマットを提供するWritableRecordFactoryサービスのサービス名を設定する -->
+                    <attribute name="WritableRecordFactoryServiceName">#ConsoleWritableRecordFactory</attribute>
+                    
+                    <depends>
+                        
+                        <!-- コンソールに出力するMessageWriterサービス -->
+                        <service name="ConsoleMessageWriter"
+                                 code="jp.ossc.nimbus.service.writer.ConsoleWriterService"/>
+                    </depends>
+                    
+                    <depends>
+                        
+                        <!-- 出力フォーマットを提供するWritableRecordFactoryサービス -->
+                        <service name="ConsoleWritableRecordFactory"
+                                 code="jp.ossc.nimbus.service.log.LogWritableRecordFactoryService">
+                            <attribute name="Format">[%CODE%,%PRIORITY%]%MESSAGE%</attribute>
+                            <attribute name="DateFormat">yyyy/MM/dd HH:mm:ss</attribute>
+                        </service>
+                    </depends>
+                    
+                </service>
+                
+            </depends>
+        </service>
+        
+    </manager>
+    
+</server>

@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="true"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- スケジューラサービス -->
+        <service name="Scheduler"
+                 code="jp.ossc.nimbus.service.scheduler2.DefaultSchedulerService">
+            
+            <!-- ScheduleManagerサービスのサービス名を設定する -->
+            <attribute name="ScheduleManagerServiceName">#ScheduleManager</attribute>
+            
+            <!-- ScheduleExecuterサービスのサービス名を設定する -->
+            <attribute name="ScheduleExecutorServiceName">#ScheduleExecutor</attribute>
+            
+            <!-- スケジュール実行スレッド数を設定する -->
+            <attribute name="ScheduleDispatcherSize">5</attribute>
+            
+            <depends>ScheduleManager</depends>
+            <depends>ScheduleExecutor</depends>
+            
+        </service>
+        
+        <!-- ScheduleManagerサービス -->
+        <service name="ScheduleManager"
+                 code="jp.ossc.nimbus.service.scheduler2.DefaultScheduleManagerService">
+            
+            <!-- スケジュールマスタのサービス名を設定する -->
+            <attribute name="ScheduleMasterServiceNames">
+                #ScheduleMaster1
+                #ScheduleMaster2
+                #ScheduleMaster3
+                #ScheduleMaster4
+            </attribute>
+            
+            <!-- スケジュールの永続化ディレクトリを設定する -->
+            <attribute name="PersistDir">./schedule</attribute>
+            
+            <depends>
+                <!-- スケジュールマスタ1
+                    08:00:00にFlow1を実行するスケジュール
+                -->
+                <service name="ScheduleMaster1"
+                         code="jp.ossc.nimbus.service.scheduler2.DefaultScheduleMaster">
+                    <attribute name="Id">Schedule1</attribute>
+                    <attribute name="TaskName">Flow1</attribute>
+                    <attribute name="StartTime">// 08:00:00 000</attribute>
+                </service>
+            </depends>
+            <depends>
+                <!-- スケジュールマスタ2
+                    スケジュールマスタ1の終了を待って、08:00:00にFlow2を実行するスケジュール
+                -->
+                <service name="ScheduleMaster2"
+                         code="jp.ossc.nimbus.service.scheduler2.DefaultScheduleMaster">
+                    <attribute name="Id">Schedule2</attribute>
+                    <attribute name="TaskName">Flow2</attribute>
+                    <attribute name="StartTime">// 08:00:00 000</attribute>
+                    <attribute name="Input">100</attribute>
+                    <attribute name="Depends">Schedule1</attribute>
+                </service>
+            </depends>
+            <depends>
+                <!-- スケジュールマスタ3
+                    スケジュールマスタ2の終了を待って、08:01:00から08:02:00まで5秒間隔にFlow3を実行するスケジュール
+                -->
+                <service name="ScheduleMaster3"
+                         code="jp.ossc.nimbus.service.scheduler2.DefaultScheduleMaster">
+                    <attribute name="Id">Schedule3</attribute>
+                    <attribute name="TaskName">Flow3</attribute>
+                    <attribute name="StartTime">// 08:01:00 000</attribute>
+                    <attribute name="EndTime">// 08:02:00 000</attribute>
+                    <attribute name="RepeatInterval">5000</attribute>
+                    <attribute name="Depends">Schedule2</attribute>
+                </service>
+            </depends>
+            <depends>
+                <!-- スケジュールマスタ4
+                    スケジュールマスタ1とスケジュールマスタ3の終了を待って、08:00:00から08:03:00までFlow4の結果でリトライを指示される限り、10秒間隔でFlow4を実行するスケジュール
+                    08:03:00に達しても、リトライを指示された場合は、エラー終了する
+                -->
+                <service name="ScheduleMaster4"
+                         code="jp.ossc.nimbus.service.scheduler2.DefaultScheduleMaster">
+                    <attribute name="Id">Schedule4</attribute>
+                    <attribute name="TaskName">Flow4</attribute>
+                    <attribute name="StartTime">// 08:00:00 000</attribute>
+                    <attribute name="Depends">Schedule1,Schedule3</attribute>
+                    <attribute name="RetryInterval">10000</attribute>
+                    <attribute name="RetryEndTime">// 08:03:00 000</attribute>
+                </service>
+            </depends>
+            
+        </service>
+        
+        <!-- ScheduleExecuterサービス -->
+        <service name="ScheduleExecutor"
+                 code="jp.ossc.nimbus.service.scheduler2.BeanFlowScheduleExecutorService">
+            
+            <!-- ScheduleManagerサービスのサービス名を設定する -->
+            <attribute name="ScheduleManagerServiceName">#ScheduleManager</attribute>
+            
+            <!-- BeanFlowInvokerFactoryサービスのサービス名を設定する -->
+            <attribute name="BeanFlowInvokerFactoryServiceName">#BeanFlowInvokerFactory</attribute>
+            
+            <depends>ScheduleManager</depends>
+            <depends>BeanFlowInvokerFactory</depends>
+            
+        </service>
+        
+        <!-- BeanFlowInvokerを生成するBeanFlowInvokerFactoryサービス -->
+        <service name="BeanFlowInvokerFactory"
+                 code="jp.ossc.nimbus.service.beancontrol.DefaultBeanFlowInvokerFactoryService">
+            
+            <!-- 業務フロー定義ファイルを格納しているディレクトリを設定する -->
+            <attribute name="DirPaths">flows</attribute>
+            
+            <!-- BeanFlowInvokerAccessインタフェースの実装クラスを設定する -->
+            <attribute name="BeanFlowInvokerAccessClass">jp.ossc.nimbus.service.beancontrol.BeanFlowInvokerAccessImpl2</attribute>
+            
+            <!-- 業務フロー定義ファイルの検証を行うかを設定する -->
+            <attribute name="Validate">true</attribute>
+        </service>
+        
+    </manager>
+    
+</server>

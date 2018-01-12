@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- コンテキスト情報を保持するContextサービス -->
+        <service name="Context"
+                 code="jp.ossc.nimbus.service.context.DefaultContextService">
+            
+            <!-- 任意の属性名のコンテキスト情報を設定できる -->
+            <attribute name="A">hoge</attribute>
+            <attribute name="B" type="int">100</attribute>
+            <attribute name="C">
+                <object code="java.util.ArrayList">
+                    <attribute name="[0]">1</attribute>
+                    <attribute name="[1]">2</attribute>
+                    <attribute name="[2]">3</attribute>
+                </object>
+            </attribute>
+            
+        </service>
+    </manager>
+    
+</server>

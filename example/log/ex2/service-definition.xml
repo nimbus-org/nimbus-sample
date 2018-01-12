@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- ログ出力を行うLoggerサービス -->
+        <service name="Log"
+                 code="jp.ossc.nimbus.service.log.LogService">
+            
+            <attribute name="DebugEnabled">true</attribute>
+            <attribute name="SystemDebugEnabled">true</attribute>
+            <attribute name="SystemInfoEnabled">true</attribute>
+            <attribute name="SystemWarnEnabled">true</attribute>
+            <attribute name="SystemErrorEnabled">true</attribute>
+            <attribute name="SystemFatalEnabled">true</attribute>
+            <attribute name="MessageRecordFactoryServiceName">#MyMessageRecordFactory</attribute>
+            
+            <!-- デフォルトカテゴリへのログを出力するMessageWriterサービスのサービス名を設定する -->
+            <attribute name="DefaultMessageWriterServiceName">#FileMessageWriter</attribute>
+            
+            <depends>
+                <service name="MyMessageRecordFactory"
+                         code="jp.ossc.nimbus.service.message.MessageRecordFactoryService">
+                    <attribute name="MessageRecordClassName">jp.ossc.nimbus.service.log.LogMessageRecordImpl</attribute>
+                    <attribute name="MessageFiles">MyMessage1</attribute>
+                    <attribute name="SecretMode">true</attribute>
+                </service>
+            </depends>
+            
+            <depends>
+                
+                <!-- Log4JのAppenderを使ってファイルに出力するMessageWriterサービス -->
+                <service name="FileMessageWriter"
+                         code="jp.ossc.nimbus.service.writer.log4j.FileAppenderWriterService">
+                    
+                    <!-- 出力ファイルのパスを設定する -->
+                    <attribute name="File">default.log</attribute>
+                    
+                    <!-- 毎回バッファをフラッシュするかどうかを設定する -->
+                    <attribute name="ImmediateFlush">true</attribute>
+                    
+                    <!-- 出力ファイルの文字エンコーディングを設定する -->
+                    <attribute name="Encoding">Windows-31J</attribute>
+                    
+                    <!-- 追加書き込みモードを設定する -->
+                    <attribute name="Append">false</attribute>
+                    
+                </service>
+                
+            </depends>
+            
+        </service>
+        
+    </manager>
+    
+</server>

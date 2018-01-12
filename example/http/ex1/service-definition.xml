@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- HttpClientを生成するHttpClientFactoryサービス -->
+        <service name="HttpClientFactory"
+                 code="jp.ossc.nimbus.service.http.httpclient.HttpClientFactoryService">
+            
+            <!-- レスポンスのストリームを変換するサービスを設定する -->
+            <attribute name="ResponseStreamConverterServiceName">#ResponseStreamConverter</attribute>
+            
+            <!-- リクエストする情報を、アクション名と関連付ける -->
+            <!--
+              アクション名：ProjectTopPage
+              HTTPメソッド:GET
+              リクエストURL：https://sourceforge.jp/projects/nimbus
+            -->
+            <attribute name="Request(ProjectTopPage)">
+                <object code="jp.ossc.nimbus.service.http.httpclient.GetHttpRequestImpl">
+                    <attribute name="URL">https://sourceforge.jp/projects/nimbus</attribute>
+                </object>
+            </attribute>
+            
+            <!--
+              アクション名：ProjectHomePage
+              HTTPメソッド:GET
+              リクエストURL：http://nimbus.sourceforge.jp/
+            -->
+            <attribute name="Request(ProjectHomePage)">
+                <object code="jp.ossc.nimbus.service.http.httpclient.GetHttpRequestImpl">
+                    <attribute name="URL">http://nimbus.sourceforge.jp/</attribute>
+                </object>
+            </attribute>
+            
+            <depends>
+                
+                <!-- ストリームと文字列間の相互変換を行うコンバータ -->
+                <service name="ResponseStreamConverter"
+                         code="jp.ossc.nimbus.util.converter.StringStreamConverter"/>
+            </depends>
+        </service>
+        
+    </manager>
+    
+</server>

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- JFreeCharを生成するJFreeCharFactoryサービス -->
+        <service name="ChartFactory"
+                 code="jp.ossc.nimbus.service.graph.JFreeChartFactoryService">
+            
+            <!-- Plotを生成するPlotFactoryサービスのサービス名を設定する -->
+            <attribute name="PlotFactoryServiceName">#PlotFactory</attribute>
+            
+            <depends>#PlotFactory</depends>
+        </service>
+        
+        <!-- Plotを生成するPlotFactoryサービス -->
+        <service name="PlotFactory"
+                 code="jp.ossc.nimbus.service.graph.XYPlotFactoryService">
+            
+            <!-- PlotConditionでPlotを特定するためのPlotの名前を設定する -->
+            <attribute name="Name">Sample1</attribute>
+            
+            <!-- Datasetを生成するDatasetFactoryサービスのサービス名を設定する -->
+            <attribute name="DatasetFactoryServiceNames">
+                #DatasetFactory
+            </attribute>
+            
+            <!-- 縦軸を描画するAxisサービスのサービス名を設定する -->
+            <attribute name="RangeAxisServiceNames">
+                #NumberAxis
+            </attribute>
+            
+            <!-- 横軸を描画するAxisサービスのサービス名を設定する -->
+            <attribute name="DomainAxisServiceNames">
+                #TimeAxis
+            </attribute>
+            
+            <depends>#DatasetFactory</depends>
+            <depends>#NumberAxis</depends>
+            <depends>#TimeAxis</depends>
+        </service>
+        
+        <!-- Datasetを生成するDatasetFactoryサービス -->
+        <service name="DatasetFactory"
+                 code="jp.ossc.nimbus.service.graph.CSVFileTimeSeriesCollectionFactoryService">
+            
+            <!-- CSVファイルの日時列のフォーマットを設定する -->
+            <attribute name="DateFormatPattern">yyyy/MM/dd HH:mm:ss</attribute>
+            
+            <!-- 時系列データ１のCSVファイルの情報を設定する -->
+            <attribute name="CSVFileInfo(時系列データ１)">
+                <object code="jp.ossc.nimbus.service.graph.CSVFileTimeSeriesCollectionFactoryService$CSVFileInfo">
+                    
+                    <!-- CSVファイル名を設定する -->
+                    <attribute name="File">./data1.csv</attribute>
+                </object>
+            </attribute>
+            
+            <!-- 時系列データ１のデータ自体の時間刻みを設定する -->
+            <attribute name="TimePeriodClass(時系列データ１)">org.jfree.data.time.Second</attribute>
+        </service>
+        
+        <!-- 横軸を描画するAxisを生成するファクトリサービス -->
+        <service name="TimeAxis"
+                 code="org.jfree.chart.axis.DateAxis"
+                 instance="factory">
+            
+            <!-- ラベルを設定する -->
+            <attribute name="Label">時刻</attribute>
+            
+            <!-- 軸の刻みを設定する -->
+            <attribute name="TickUnit">
+                
+                <!-- 30分刻みでHH:mmのフォーマットで時刻を表示するTickUnit -->
+                <object code="org.jfree.chart.axis.DateTickUnit">
+                    <constructor>
+                        <argument type="int">
+                            <static-field-ref code="org.jfree.chart.axis.DateTickUnit" name="MINUTE"/>
+                        </argument>
+                        <argument type="int">30</argument>
+                        <argument type="java.text.DateFormat">
+                            <object code="java.text.SimpleDateFormat">
+                                <constructor>
+                                    <argument>HH:mm</argument>
+                                </constructor>
+                            </object>
+                        </argument>
+                    </constructor>
+                </object>
+            </attribute>
+        </service>
+        
+        <!-- 縦軸を描画するAxisを生成するファクトリサービス -->
+        <service name="NumberAxis"
+                 code="org.jfree.chart.axis.NumberAxis"
+                 instance="factory">
+            
+            <!-- ラベルを設定する -->
+            <attribute name="Label">値</attribute>
+        </service>
+        
+        <!-- PNG形式の画像を生成するImageWriterを生成するファクトリサービス -->
+        <service name="ImageWriter"
+                 code="javax.imageio.ImageWriter"
+                 instance="factory">
+            <constructor>
+                <invoke name="next">
+                    <target>
+                        <static-invoke code="javax.imageio.ImageIO"
+                                       name="getImageWritersByFormatName">
+                            <argument>png</argument>
+                        </static-invoke>
+                    </target>
+                </invoke>
+            </constructor>
+        </service>
+        
+    </manager>
+    
+</server>

@@ -1,0 +1,4 @@
+urlid localDB
+url jdbc:hsqldb:./localDB;shutdown=true
+username sa
+password

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- リモートのプロキシとなるRemoteClientサービス-->
+        <service name="Messenger"
+                 code="jp.ossc.nimbus.service.proxy.RemoteClientService">
+            
+            <attribute name="RemoteInterfaceClassName">sample.service.Messenger</attribute>
+            <attribute name="InvokerServiceName">#Invoker</attribute>
+            
+            <!-- インターセプタのチェインを定義するInterceptorChainListサービスのサービス名を設定する-->
+            <attribute name="InterceptorChainListServiceName">#InterceptorChainList</attribute>
+            
+            <depends>
+                <!-- プロキシする実体を呼び出すInvokerサービス
+                  JNDIからRemoteServerInvokerをlookupして呼び出す。
+                -->
+                <service name="Invoker"
+                         code="jp.ossc.nimbus.service.proxy.invoker.RemoteClientMethodCallInvokerService">
+                    <attribute name="JndiRepositoryServiceName">#LocalRMIRepository</attribute>
+                    <attribute name="RemoteServerJndiName">nimbus/RemoteServiceServer</attribute>
+                    <attribute name="RemoteServiceName">#Messenger</attribute>
+                    <depends>
+                        <!-- RMIサーバから取得するリポジトリサービス -->
+                        <service name="LocalRMIRepository"
+                                 code="jp.ossc.nimbus.service.repository.RMIRepositoryService">
+                            <attribute name="Port">1099</attribute>
+                        </service>
+                    </depends>
+                </service>
+            </depends>
+            <depends>InterceptorChainList</depends>
+        </service>
+        
+        <!-- インターセプタのチェインを定義するInterceptorChainListサービス-->
+        <service name="InterceptorChainList"
+                 code="jp.ossc.nimbus.service.aop.DefaultInterceptorChainListService">
+            <attribute name="InterceptorServiceNames">
+                #JournalInterceptor
+            </attribute>
+            <depends>
+                <!-- ジャーナルを出力するInterceptorサービス -->
+                <service name="JournalInterceptor"
+                         code="jp.ossc.nimbus.service.aop.interceptor.MethodJournalInterceptorService">
+                    <attribute name="JournalServiceName">#Journal</attribute>
+                    <depends>Journal</depends>
+                </service>
+            </depends>
+        </service>
+        
+        <!-- ジャーナルサービス
+          以下は、全てジャーナルサービスに関連するサービス定義であるが、
+          説明は、ここでは省略する。
+        -->
+        <service name="Journal"
+                 code="jp.ossc.nimbus.service.journal.ThreadManagedJournalService">
+            <attribute name="EditorFinderName">#JournalEditorFinder</attribute>
+            <attribute name="WritableElementKey">Journal for Sample</attribute>
+            <attribute name="CategoryServiceNames">#JournalCategory</attribute>
+            <depends>JournalEditorFinder</depends>
+            <depends>JournalCategory</depends>
+        </service>
+        
+        <service name="JournalCategory"
+                 code="jp.ossc.nimbus.service.writer.SimpleCategoryService">
+            <attribute name="MessageWriterServiceName">#JournalWriter</attribute>
+            <attribute name="WritableRecordFactoryServiceName">#JournalWritableRecordFactory</attribute>
+            <depends>JournalWriter</depends>
+            <depends>JournalWritableRecordFactory</depends>
+        </service>
+        
+        <service name="JournalWritableRecordFactory"
+                 code="jp.ossc.nimbus.service.writer.WritableRecordFactoryService">
+            <attribute name="Format">%Journal for Sample%</attribute>
+        </service>
+         
+        <service name="JournalWriter"
+                 code="jp.ossc.nimbus.service.writer.ConsoleWriterService"/>
+        
+        <service name="JournalEditorFinder"
+                 code="jp.ossc.nimbus.service.journal.editorfinder.ObjectMappedEditorFinderService">
+            <attribute name="EditorProperties">
+                java.lang.Object=#ObjectJournalEditor
+                java.lang.Class=#ClassJournalEditor
+                java.util.Date=#DateJournalEditor
+                jp.ossc.nimbus.service.journal.RequestJournal=#RequestJournalEditor
+                jp.ossc.nimbus.service.journal.editor.MethodJournalData=#MethodJournalEditor
+                jp.ossc.nimbus.service.journal.editor.MethodCallJournalData=#MethodCallJournalEditor
+                jp.ossc.nimbus.service.journal.editor.MethodReturnJournalData=#MethodReturnJournalEditor
+            </attribute>
+            <depends>ObjectJournalEditor</depends>
+            <depends>ClassJournalEditor</depends>
+            <depends>DateJournalEditor</depends>
+            <depends>RequestJournalEditor</depends>
+            <depends>MethodJournalEditor</depends>
+            <depends>MethodCallJournalEditor</depends>
+            <depends>MethodReturnJournalEditor</depends>
+        </service>
+        
+        <service name="ObjectJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.ObjectJournalEditorService"/>
+        
+        <service name="ClassJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.ClassJournalEditorService">
+            <attribute name="ShortClassName">true</attribute>
+        </service>
+        
+        <service name="DateJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.DateJournalEditorService">
+            <attribute name="Format">yyyy/MM/dd HH:mm:ss.SSS</attribute>
+        </service>
+        
+        <service name="RequestJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.SimpleRequestJournalEditorService"/>
+        
+        <service name="MethodJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.MethodJournalEditorService"/>
+        
+        <service name="MethodCallJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.MethodCallJournalEditorService"/>
+        
+        <service name="MethodReturnJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.MethodReturnJournalEditorService"/>
+        
+    </manager>
+    
+</server>

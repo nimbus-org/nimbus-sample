@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="true"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- スケジューラサービス -->
+        <service name="Scheduler"
+                 code="jp.ossc.nimbus.service.scheduler2.DefaultSchedulerService">
+            
+            <!-- ScheduleManagerサービスのサービス名を設定する -->
+            <attribute name="ScheduleManagerServiceName">#ScheduleManager</attribute>
+            
+            <!-- ScheduleExecuterサービスのサービス名を設定する -->
+            <attribute name="ScheduleExecutorServiceName">#ScheduleExecutor</attribute>
+            
+            <!-- スケジュール実行スレッド数を設定する -->
+            <attribute name="ScheduleDispatcherSize">5</attribute>
+            
+            <depends>ScheduleManager</depends>
+            <depends>ScheduleExecutor</depends>
+            
+        </service>
+        
+        <!-- ScheduleManagerサービス -->
+        <service name="ScheduleManager"
+                 code="jp.ossc.nimbus.service.scheduler2.DatabaseScheduleManagerService">
+            
+            <!-- JDBCコネクションを取得するConnectionFactoryサービスのサービス名を設定する -->
+            <attribute name="ConnectionFactoryServiceName">#ConnectionFactory</attribute>
+            
+            <!-- スケジュールIDを発番するSQLを設定する -->
+            <attribute name="NextScheduleIdSelectQuery">select next value for SEQUENCE_SCHEDULE_ID from SCHEDULE_ID_SEQUENCE</attribute>
+            
+            <depends>ConnectionFactory</depends>
+            <depends>ScheduleSequenceTableCreator</depends>
+            <depends>ScheduleMasterTableCreator</depends>
+            <depends>ScheduleDependsMasterTableCreator</depends>
+            <depends>ScheduleGroupMasterTableCreator</depends>
+            <depends>ScheduleTableCreator</depends>
+            <depends>ScheduleDependsTableCreator</depends>
+            
+        </service>
+        
+        <!-- 集配信スケジュールを実行するScheduleExecuterサービス -->
+        <service name="ScheduleExecutor"
+                 code="jp.ossc.nimbus.service.scheduler2.ConcentrateScheduleExecutorService">
+            
+            <!-- ScheduleManagerサービスのサービス名を設定する -->
+            <attribute name="ScheduleManagerServiceName">#ScheduleManager</attribute>
+            
+            <!-- BeanFlowInvokerFactoryサービスのサービス名を設定する -->
+            <attribute name="BeanFlowInvokerFactoryServiceName">#BeanFlowInvokerFactory</attribute>
+            
+            <!-- ConcentrateBackupManagerサービスのサービス名を設定する -->
+            <attribute name="ConcentrateBackupManagerServiceName">#ConcentrateBackupManager</attribute>
+            
+            <depends>ScheduleManager</depends>
+            <depends>BeanFlowInvokerFactory</depends>
+            <depends>ConcentrateBackupManager</depends>
+            
+        </service>
+        
+        <!-- 集配信のバックアップを行うConcentrateBackupManagerサービス -->
+        <service name="ConcentrateBackupManager"
+                 code="jp.ossc.nimbus.service.scheduler2.FileConcentrateBackupManagerService">
+            
+            <!-- バックアップファイルの圧縮モードを設定する -->
+            <attribute name="CompressMode"><static-field-ref code="jp.ossc.nimbus.service.scheduler2.FileConcentrateBackupManagerServiceMBean" name="COMPRESS_MODE_GZIP"/></attribute>
+        </service>
+        
+        
+        <!-- BeanFlowInvokerを生成するBeanFlowInvokerFactoryサービス -->
+        <service name="BeanFlowInvokerFactory"
+                 code="jp.ossc.nimbus.service.beancontrol.DefaultBeanFlowInvokerFactoryService">
+            
+            <!-- 業務フロー定義ファイルを格納しているディレクトリを設定する -->
+            <attribute name="DirPaths">flows</attribute>
+            
+            <!-- BeanFlowInvokerAccessインタフェースの実装クラスを設定する -->
+            <attribute name="BeanFlowInvokerAccessClass">jp.ossc.nimbus.service.beancontrol.BeanFlowInvokerAccessImpl2</attribute>
+            
+            <!-- 業務フロー定義ファイルの検証を行うかを設定する -->
+            <attribute name="Validate">true</attribute>
+        </service>
+        
+        <!-- JDBCドライバ経由でConnectionを取得するConnectionFactoryサービス -->
+        <service name="ConnectionFactory"
+                 code="jp.ossc.nimbus.service.connection.JDBCConnectionFactoryService">
+            <attribute name="DriverName">org.hsqldb.jdbcDriver</attribute>
+            <attribute name="ConnectionURL">jdbc:hsqldb:./db/localDB</attribute>
+            <attribute name="UserName">sa</attribute>
+            <attribute name="Password"></attribute>
+        </service>
+        
+        <!-- スケジュールテーブルのSEQUENCEの準備をするTableCreatorサービス -->
+        <service name="ScheduleSequenceCreator"
+                 code="jp.ossc.nimbus.service.connection.TableCreatorService">
+            <attribute name="ConnectionFactoryServiceName">#ConnectionFactory</attribute>
+            <attribute name="RecordListConverterServiceName">#RecordListConverter</attribute>
+            <attribute name="ExistsTableQuery">select count(1) from SYSTEM_SEQUENCES where SEQUENCE_NAME='SEQUENCE_SCHEDULE_ID'</attribute>
+            <attribute name="CreateTableQuery">create sequence SEQUENCE_SCHEDULE_ID as INTEGER start with 1 increment by 1</attribute>
+            <attribute name="DropTableQuery">drop sequence SEQUENCE_SCHEDULE_ID</attribute>
+            <attribute name="CreateTableOnStart">true</attribute>
+            <attribute name="DropTableOnStop">true</attribute>
+            <depends>ConnectionFactory</depends>
+            <depends>RecordListConverter</depends>
+        </service>
+        
+        <!-- スケジュールテーブルのスケジュールID用のSEQUENCEテーブルの準備をするTableCreatorサービス -->
+        <service name="ScheduleSequenceTableCreator"
+                 code="jp.ossc.nimbus.service.connection.TableCreatorService">
+            <attribute name="ConnectionFactoryServiceName">#ConnectionFactory</attribute>
+            <attribute name="RecordListConverterServiceName">#RecordListConverter</attribute>
+            <attribute name="ExistsTableQuery">select count(1) from SYSTEM_TABLES where TABLE_NAME='SCHEDULE_ID_SEQUENCE'</attribute>
+            <attribute name="CreateTableQuery">create table SCHEDULE_ID_SEQUENCE(SEQUENCE_SCHEDULE_ID INTEGER not null)</attribute>
+            <attribute name="InsertQuery">insert into SCHEDULE_ID_SEQUENCE values(?)</attribute>
+            <attribute name="DropTableQuery">drop table SCHEDULE_ID_SEQUENCE</attribute>
+            <attribute name="CreateTableOnStart">true</attribute>
+            <attribute name="InsertOnStart">true</attribute>
+            <attribute name="DropTableOnStop">true</attribute>
+            <attribute name="RecordListSchema">
+                :SEQUENCE_SCHEDULE_ID,int
+            </attribute>
+            <attribute name="InsertRecords">
+                1
+            </attribute>
+            <depends>ScheduleSequenceCreator</depends>
+            <depends>ConnectionFactory</depends>
+            <depends>RecordListConverter</depends>
+        </service>
+        
+        <!-- スケジュールマスタテーブルの準備をするTableCreatorサービス -->
+        <service name="ScheduleMasterTableCreator"
+                 code="jp.ossc.nimbus.service.connection.TableCreatorService">
+            <attribute name="ConnectionFactoryServiceName">#ConnectionFactory</attribute>
+            <attribute name="RecordListConverterServiceName">#RecordListConverter</attribute>
+            <attribute name="ExistsTableQuery">select count(1) from SYSTEM_TABLES where TABLE_NAME='SCHEDULE_MST'</attribute>
+            <attribute name="CreateTableQuery">
+                create table SCHEDULE_MST(
+                    ID              VARCHAR(256) not null,
+                    TASK_NAME       VARCHAR(256) not null,
+                    SCHEDULE_TYPE   VARCHAR(20),
+                    INPUT           VARCHAR(256),
+                    START_TIME      CHAR(9) not null,
+                    END_TIME        CHAR(9),
+                    REPEAT_INTERVAL NUMERIC(18,0),
+                    RETRY_INTERVAL  NUMERIC(18,0),
+                    RETRY_END_TIME  CHAR(9),
+                    MAX_DELAY_TIME  NUMERIC(18,0),
+                    ENABLE          SMALLINT not null,
+                    EXECUTOR_KEY    VARCHAR(128),
+                    EXECUTOR_TYPE   VARCHAR(128),
+                    TEMPLATE        SMALLINT not null,
+                    PRIMARY KEY(ID)
+                )
+            </attribute>
+            <attribute name="InsertQuery">insert into SCHEDULE_MST values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)</attribute>
+            <attribute name="DropTableQuery">drop table SCHEDULE_MST</attribute>
+            <attribute name="CreateTableOnStart">true</attribute>
+            <attribute name="InsertOnStart">true</attribute>
+            <attribute name="DropTableOnStop">true</attribute>
+            <attribute name="RecordListSchema">
+                :ID,java.lang.String
+                :TASK_NAME,java.lang.String
+                :SCHEDULE_TYPE,java.lang.String
+                :INPUT,java.lang.String
+                :START_TIME,java.lang.String
+                :END_TIME,java.lang.String
+                :REPEAT_INTERVAL,long
+                :RETRY_INTERVAL,long
+                :RETRY_END_TIME,java.lang.String
+                :MAX_DELAY_TIME,long
+                :ENABLE,short
+                :EXECUTOR_KEY,java.lang.String
+                :EXECUTOR_TYPE,java.lang.String
+                :TEMPLATE,short
+            </attribute>
+            <attribute name="InsertRecords">
+                Schedule1,SITE1:GET_file1,null,"GET,file1.txt,site1_file1.txt",080000000,null,null,null,null,null,1,null,null,0
+                Schedule2,SITE2:PUT_site1_file1,null,"PUT,site1_file1.txt,site1_file1.txt",080000000,null,null,null,null,null,1,null,null,0
+                Schedule3,SITE2:GET_file2,null,"GET,file2.txt,site2_file2.txt",080000000,null,null,null,null,null,1,null,null,0
+                Schedule4,SITE1:PUT_site2_file2,null,"PUT,site2_file2.txt,site2_file2.txt",080000000,null,null,null,null,null,1,null,null,0
+            </attribute>
+            <attribute name="IgnoreSQLExceptionErrorCodeOnInsert">-104</attribute>
+            <invoke name="setSqlType">
+                <argument type="java.lang.Class">java.lang.String</argument>
+                <argument type="int"><static-field-ref code="java.sql.Types" name="VARCHAR"/></argument>
+            </invoke>
+            <invoke name="setSqlType">
+                <argument type="java.lang.Class">long</argument>
+                <argument type="int"><static-field-ref code="java.sql.Types" name="BIGINT"/></argument>
+            </invoke>
+            <depends>ConnectionFactory</depends>
+            <depends>RecordListConverter</depends>
+        </service>
+        
+        <!-- スケジュール依存マスタテーブルの準備をするTableCreatorサービス -->
+        <service name="ScheduleDependsMasterTableCreator"
+                 code="jp.ossc.nimbus.service.connection.TableCreatorService">
+            <attribute name="ConnectionFactoryServiceName">#ConnectionFactory</attribute>
+            <attribute name="RecordListConverterServiceName">#RecordListConverter</attribute>
+            <attribute name="ExistsTableQuery">select count(1) from SYSTEM_TABLES where TABLE_NAME='SCHEDULE_DEPENDS_MST'</attribute>
+            <attribute name="CreateTableQuery">
+                create table SCHEDULE_DEPENDS_MST(
+                    ID          VARCHAR(256) not null,
+                    DEPENDS_ID  VARCHAR(256) not null,
+                    PRIMARY KEY(ID, DEPENDS_ID)
+                )
+            </attribute>
+            <attribute name="InsertQuery">insert into SCHEDULE_DEPENDS_MST values(?,?)</attribute>
+            <attribute name="DropTableQuery">drop table SCHEDULE_DEPENDS_MST</attribute>
+            <attribute name="CreateTableOnStart">true</attribute>
+            <attribute name="InsertOnStart">true</attribute>
+            <attribute name="DropTableOnStop">true</attribute>
+            <attribute name="RecordListSchema">
+                :ID,java.lang.String
+                :DEPENDS_ID,java.lang.String
+            </attribute>
+            <attribute name="InsertRecords">
+                Schedule2,Schedule1
+                Schedule4,Schedule3
+            </attribute>
+            <attribute name="IgnoreSQLExceptionErrorCodeOnInsert">-104</attribute>
+            <depends>ConnectionFactory</depends>
+            <depends>RecordListConverter</depends>
+        </service>
+        
+        <!-- スケジュールグループマスタテーブルの準備をするTableCreatorサービス -->
+        <service name="ScheduleGroupMasterTableCreator"
+                 code="jp.ossc.nimbus.service.connection.TableCreatorService">
+            <attribute name="ConnectionFactoryServiceName">#ConnectionFactory</attribute>
+            <attribute name="RecordListConverterServiceName">#RecordListConverter</attribute>
+            <attribute name="ExistsTableQuery">select count(1) from SYSTEM_TABLES where TABLE_NAME='SCHEDULE_GROUP_MST'</attribute>
+            <attribute name="CreateTableQuery">
+                create table SCHEDULE_GROUP_MST(
+                    ID          VARCHAR(256) not null,
+                    GROUP_ID    VARCHAR(256) not null,
+                    PRIMARY KEY(ID, GROUP_ID)
+                )
+            </attribute>
+            <attribute name="InsertQuery">insert into SCHEDULE_GROUP_MST values(?,?)</attribute>
+            <attribute name="DropTableQuery">drop table SCHEDULE_GROUP_MST</attribute>
+            <attribute name="CreateTableOnStart">true</attribute>
+            <attribute name="InsertOnStart">true</attribute>
+            <attribute name="DropTableOnStop">true</attribute>
+            <attribute name="RecordListSchema">
+                :ID,java.lang.String
+                :GROUP_ID,java.lang.String
+            </attribute>
+            <attribute name="InsertRecords">
+                Schedule2,Group1
+                Schedule4,Group1
+            </attribute>
+            <attribute name="IgnoreSQLExceptionErrorCodeOnInsert">-104</attribute>
+            <depends>ConnectionFactory</depends>
+            <depends>RecordListConverter</depends>
+        </service>
+        
+        <!-- スケジュールテーブルの準備をするTableCreatorサービス -->
+        <service name="ScheduleTableCreator"
+                 code="jp.ossc.nimbus.service.connection.TableCreatorService">
+            <attribute name="ConnectionFactoryServiceName">#ConnectionFactory</attribute>
+            <attribute name="RecordListConverterServiceName">#RecordListConverter</attribute>
+            <attribute name="ExistsTableQuery">select count(1) from SYSTEM_TABLES where TABLE_NAME='SCHEDULE'</attribute>
+            <attribute name="CreateTableQuery">
+                create table SCHEDULE(
+                    ID             VARCHAR(20) NOT NULL,
+                    GROUP_ID       VARCHAR(256),
+                    MASTER_ID      VARCHAR(256) NOT NULL,
+                    S_DATE         CHAR(8) NOT NULL,
+                    S_TIME         CHAR(9) NOT NULL,
+                    TASK_NAME      VARCHAR(256) NOT NULL,
+                    INPUT          VARCHAR(256),
+                    OUTPUT         VARCHAR(1500),
+                    INITIAL_DATE   CHAR(8) NOT NULL,
+                    INITIAL_TIME   CHAR(9) NOT NULL,
+                    RETRY_INTERVAL NUMERIC(18,0),
+                    RETRY_END_TIME CHAR(9),
+                    STATE          CHAR(1) DEFAULT 'I' NOT NULL,
+                    CONTROL_STATE  CHAR(1) DEFAULT 'I' NOT NULL,
+                    EXECUTOR_KEY   VARCHAR(128),
+                    EXECUTOR_TYPE  VARCHAR(128),
+                    EXEC_S_TIME    CHAR(17),
+                    EXEC_E_TIME    CHAR(17),
+                    MAX_DELAY_TIME NUMERIC(18,0),
+                    CHECK_STATE    CHAR(1) DEFAULT 'I' NOT NULL,
+                    ROWVERSION     INTEGER,
+                    UPDATEUSERID   VARCHAR(256),
+                    UPDATETIME     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY(ID)
+                )
+            </attribute>
+            <attribute name="DropTableQuery">drop table SCHEDULE_MST</attribute>
+            <attribute name="DropTableOnStop">true</attribute>
+            <attribute name="CreateTableOnStart">true</attribute>
+            <depends>ConnectionFactory</depends>
+            <depends>RecordListConverter</depends>
+        </service>
+        
+        <!-- スケジュール依存マスタテーブルの準備をするTableCreatorサービス -->
+        <service name="ScheduleDependsTableCreator"
+                 code="jp.ossc.nimbus.service.connection.TableCreatorService">
+            <attribute name="ConnectionFactoryServiceName">#ConnectionFactory</attribute>
+            <attribute name="RecordListConverterServiceName">#RecordListConverter</attribute>
+            <attribute name="ExistsTableQuery">select count(1) from SYSTEM_TABLES where TABLE_NAME='SCHEDULE_DEPENDS'</attribute>
+            <attribute name="CreateTableQuery">
+                create table SCHEDULE_DEPENDS(
+                    ID          VARCHAR(256) not null,
+                    DEPENDS_ID  VARCHAR(256) not null,
+                    ROWVERSION     INTEGER,
+                    UPDATEUSERID   VARCHAR(256),
+                    UPDATETIME     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY(ID, DEPENDS_ID)
+                )
+            </attribute>
+            <attribute name="DropTableQuery">drop table SCHEDULE_DEPENDS</attribute>
+            <attribute name="CreateTableOnStart">true</attribute>
+            <attribute name="DropTableOnStop">true</attribute>
+            <depends>ConnectionFactory</depends>
+            <depends>RecordListConverter</depends>
+        </service>
+        
+        <!-- CSV形式のストリームとRecordListの相互変換を行うConverterサービス -->
+        <service name="RecordListConverter"
+                 code="jp.ossc.nimbus.util.converter.RecordListCSVConverter">
+            <attribute name="Enclose">true</attribute>
+            <attribute name="IgnoreEmptyLine">true</attribute>
+            <attribute name="NullValue">null</attribute>
+        </service>
+        
+    </manager>
+    
+</server>

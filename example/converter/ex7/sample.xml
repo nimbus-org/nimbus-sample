@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<project>
+    <name>Nimbus</name>
+    <url>http://nimbus.sourceforge.jp</url>
+    
+    <functions>
+        <function name="core">
+            <name>コア</name>
+            <package>jp.ossc.nimbus.core</package>
+            <description>NimbusのコアとなるDIコンテナ</description>
+        </function>
+        <function name="beans">
+            <name>Beans</name>
+            <package>jp.ossc.nimbus.beans</package>
+            <description>Beanの操作、DTOなど</description>
+        </function>
+        <function name="io">
+            <name>I/O</name>
+            <package>jp.ossc.nimbus.io</package>
+            <description>入出力周りの支援機能</description>
+        </function>
+    </functions>
+</project>

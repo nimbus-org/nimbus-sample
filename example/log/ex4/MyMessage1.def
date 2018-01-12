@@ -1,0 +1,5 @@
+APL_001,Good morning!,0,jp.ossc.nimbus.service.log.SYSTEM_DEBUG_CATEGORY
+APL_002,Good afternoon\\, @0!,50,jp.ossc.nimbus.service.log.SYSTEM_INFO_CATEGORY
+APL_003,Good evening\\, @0 and @1!,100,jp.ossc.nimbus.service.log.SYSTEM_WARN_CATEGORY
+APL_004,Good night\\, #0 and @1!,150,jp.ossc.nimbus.service.log.SYSTEM_ERROR_CATEGORY
+APL_005,Bye @0!,200,jp.ossc.nimbus.service.log.SYSTEM_FATAL_CATEGORY

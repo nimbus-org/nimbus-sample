@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE flows PUBLIC
+  "-//Nimbus//DTD Nimbus Bean Flow 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/beanflow_1_0.dtd">
+
+<flows>
+    
+    <!-- 雇用者マスタ -->
+    <flow name="EMPLOYEE_MST">
+        <resource name="Connection" service="Nimbus#JDBCTransactionResourceFactory" trancontrol="true"/>
+        <step>
+            <target><object code="jp.ossc.nimbus.recset.RecordSet"/></target>
+            <invoke name="initSchema">
+                <argument>
+                    PART_CD,CHAR,3,0,0
+                    SECTION_CD,CHAR,2,0,0
+                    NO,CHAR,5,0,0
+                    NAME,VARCHAR,100,2,0
+                </argument>
+            </invoke>
+            <attribute name="FromTable">EMPLOYEE_MST</attribute>
+            <attribute name="Connection">
+                <resource-ref>Connection</resource-ref>
+            </attribute>
+            <invoke name="search"/>
+            <result><this/></result>
+        </step>
+    </flow>
+    
+    <!-- Employee検証フロー -->
+    <flow name="ValidationEmployee">
+        <step>
+            <target><service-ref>Nimbus#EmployeeValidator</service-ref></target>
+            <result>
+                <invoke name="validate">
+                    <argument type="java.lang.Object"><input/></argument>
+                </invoke>
+            </result>
+        </step>
+    </flow>
+    
+    <!-- Family検証フロー -->
+    <flow name="ValidationFamily">
+        <step>
+            <target><service-ref>Nimbus#FamilyValidator</service-ref></target>
+            <result>
+                <invoke name="validate">
+                    <argument type="java.lang.Object"><input/></argument>
+                </invoke>
+            </result>
+        </step>
+    </flow>
+    
+</flows>

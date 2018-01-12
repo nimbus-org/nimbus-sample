@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+
+<!--=======================================================================
+リソース取得サービス群
+========================================================================-->
+
+        <!--ローカルJNDI検索サービス-->
+        <service name="LocalJndiFinder"
+                 code="jp.ossc.nimbus.service.jndi.CachedJndiFinderService">
+            <attribute name="Environment">
+                java.naming.factory.initial=org.jnp.interfaces.NamingContextFactory
+                java.naming.factory.url.pkgs=org.jboss.naming:org.jnp.interfaces
+                java.naming.provider.url=localhost:1099
+            </attribute>
+            <attribute name="CacheMapServiceName">#LocalJndiCache</attribute>
+            <depends>
+                <!-- ローカルJNDIキャッシュサービス -->
+                <service name="LocalJndiCache"
+                         code="jp.ossc.nimbus.service.cache.MemoryCacheMapService"/>
+            </depends>
+        </service>
+
+<!--=======================================================================
+IOC呼び出しサービス。
+========================================================================-->
+        
+        <!-- IOC呼び出しサービス -->
+        <service name="IOCFacadeCaller"
+                 code="jp.ossc.nimbus.service.ioccall.DefaultFacadeCallService">
+            <attribute name="EjbFactoryServieName">#IOCSynchEjbFactory</attribute>
+            <attribute name="FacadeEjbName">SLSBFacadeRemote</attribute>
+            <attribute name="UnitOfWorkEjbFactoryServieName">#IOCUnitOfWorkEjbFactory</attribute>
+            <attribute name="UnitOfWorkEjbName">SLSBUnitOfWorkRemote</attribute>
+            <attribute name="CommandEjbFactoryServieName">#IOCCommandEjbFactory</attribute>
+            <attribute name="CommandEjbName">SLSBCommandRemote</attribute>
+            <depends>IOCSynchEjbFactory</depends>
+            <depends>IOCUnitOfWorkEjbFactory</depends>
+            <depends>IOCCommandEjbFactory</depends>
+        </service>
+        
+        <!-- IOC同期呼び出しFacade EJBファクトリーサービス -->
+        <service name="IOCSynchEjbFactory"
+                 code="jp.ossc.nimbus.service.ejb.UnitEJBFactoryService">
+            <attribute name="homeType">jp.ossc.nimbus.ioc.ejb.facade.SLSBFacadeHome</attribute>
+            <attribute name="remoteType">jp.ossc.nimbus.ioc.ejb.facade.SLSBFacadeRemote</attribute>
+            <attribute name="jndiFinderServiceName">#LocalJndiFinder</attribute>
+            <attribute name="RemoteCacheMapServiceName">#LocalJndiCache</attribute>
+            <depends>LocalJndiFinder</depends>
+            <depends>LocalJndiCache</depends>
+        </service>
+        
+        <!-- IOC同期呼び出しUnitOfWork EJBファクトリーサービス -->
+        <service name="IOCUnitOfWorkEjbFactory"
+                 code="jp.ossc.nimbus.service.ejb.UnitEJBFactoryService">
+            <attribute name="homeType">jp.ossc.nimbus.ioc.ejb.unitofwork.SLSBUnitOfWorkHome</attribute>
+            <attribute name="remoteType">jp.ossc.nimbus.ioc.ejb.unitofwork.SLSBUnitOfWorkRemote</attribute>
+            <attribute name="jndiFinderServiceName">#LocalJndiFinder</attribute>
+            <attribute name="RemoteCacheMapServiceName">#LocalJndiCache</attribute>
+            <depends>LocalJndiFinder</depends>
+            <depends>LocalJndiCache</depends>
+        </service>
+        
+        <!-- IOC同期呼び出しCommand EJBファクトリーサービス -->
+        <service name="IOCCommandEjbFactory"
+                 code="jp.ossc.nimbus.service.ejb.UnitEJBFactoryService">
+            <attribute name="homeType">jp.ossc.nimbus.ioc.ejb.command.SLSBCommandHome</attribute>
+            <attribute name="remoteType">jp.ossc.nimbus.ioc.ejb.command.SLSBCommandRemote</attribute>
+            <attribute name="jndiFinderServiceName">#LocalJndiFinder</attribute>
+            <attribute name="RemoteCacheMapServiceName">#LocalJndiCache</attribute>
+            <depends>LocalJndiFinder</depends>
+            <depends>LocalJndiCache</depends>
+        </service>
+        
+    </manager>
+    
+</server>

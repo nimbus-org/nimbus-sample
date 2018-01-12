@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- フォーマットと出力先をまとめるCategoryサービス -->
+        <service name="Category"
+                 code="jp.ossc.nimbus.service.writer.SimpleCategoryService">
+            <attribute name="WritableRecordFactoryServiceName">#WritableRecordFactory</attribute>
+            <attribute name="MessageWriterServiceName">#Writer</attribute>
+            <depends>
+                <!-- 出力情報をフォーマットするWritableRecordFactoryサービス
+                  MapからフォーマットしてMessageWriterの入力であるWritableRecordを生成する
+                -->
+                <service name="WritableRecordFactory"
+                         code="jp.ossc.nimbus.service.writer.PropertyWritableRecordFactoryService">
+                    
+                    <!-- フォーマットのキーと出力情報のプロパティのマッピング
+                      以下の指定方法で、複数指定できる。
+                      フォーマットのキー=出力情報のプロパティ
+                      繰り返し項目となるキーは、キーの最後に"*"を付加する。
+                      右辺の指定方法は、jp.ossc.nimbus.beans.PropertyFactoryの
+                      仕様に従います。ここでは、詳細には説明しません。
+                    -->
+                    <attribute name="FormatKeyMapping">
+                        DATE=Date
+                        MESSAGE=Message
+                        ID=User.Id
+                        USER_PROPERTIES*=User.Properties.entrySet
+                    </attribute>
+                    
+                    <!-- FormatKeyMapping属性で指定したフォーマットキーを
+                      使ったフォーマット
+                      フォーマットキーは、"%"で囲んで指定する。
+                    -->
+                    <attribute name="Format">%DATE% : %ID%{ %USER_PROPERTIES*%} : %MESSAGE%</attribute>
+                    
+                    <!-- FormatKeyMapping属性で定義した繰り返し項目の
+                      フォーマットキーと出力情報のプロパティのマッピング
+                      指定方法は、FormatKeyMapping属性と同じ。
+                    -->
+                    <attribute name="IterateFormatKeyMapping(USER_PROPERTIES*)">
+                        NAME=Key
+                        PROPERTY=Value
+                    </attribute>
+                    
+                    <!-- IterateFormatKeyMapping属性で指定したフォーマットキーを
+                      使ったフォーマット
+                      フォーマットキーは、"%"で囲んで指定する。
+                    -->
+                    <attribute name="IterateFormat(USER_PROPERTIES*)">"%NAME%="%PROPERTY%", "</attribute>
+                    
+                    <!-- フォーマットキーに対応するWritableElementの実装クラス
+                      以下の指定方法で、複数指定できる。
+                      フォーマットキー=WritableElementの実装クラス名
+                      特に指定しないフォーマットキーは、
+                       jp.ossc.nimbus.service.writer.SimpleElement
+                      が使用される
+                    -->
+                    <attribute name="ImplementClasses">
+                        DATE=jp.ossc.nimbus.service.writer.DateElement
+                    </attribute>
+                    
+                </service>
+            </depends>
+            <depends>
+                <!-- コンソールに出力するMessageWriterサービス -->
+                <service name="Writer"
+                         code="jp.ossc.nimbus.service.writer.ConsoleWriterService"/>
+            </depends>
+        </service>
+        
+    </manager>
+    
+</server>

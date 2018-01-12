@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <service name="Validator"
+                 code="jp.ossc.nimbus.service.validator.MasterValidatorService">
+            <attribute name="ConnectionFactoryServiceName">#ConnectionFactory</attribute>
+            <attribute name="RecordSet">
+                <object code="jp.ossc.nimbus.recset.RecordSet">
+                    <invoke name="initSchema">
+                        <argument>
+                            PART_CD,CHAR,3,0,0
+                            SECTION_CD,CHAR,2,0,0
+                            NO,CHAR,5,0,0
+                            NAME,VARCHAR,100,2,0
+                        </argument>
+                    </invoke>
+                    <attribute name="FromTable">EMPLOYEE_MST</attribute>
+                    <invoke name="setWhere">
+                        <argument>where PART_CD = ? and SECTION_CD = ? and NO = ?</argument>
+                    </invoke>
+                </object>
+            </attribute>
+            <attribute name="BindData[0]">VALUE.PartCode</attribute>
+            <attribute name="BindData[1]">VALUE.SectionCode</attribute>
+            <attribute name="BindData[2]">VALUE.No</attribute>
+            <depends>ConnectionFactory</depends>
+        </service>
+        
+        <!-- JDBCドライバ経由でConnectionを取得するConnectionFactoryサービス -->
+        <service name="ConnectionFactory"
+                 code="jp.ossc.nimbus.service.connection.JDBCConnectionFactoryService">
+            <attribute name="DriverName">org.hsqldb.jdbcDriver</attribute>
+            <attribute name="ConnectionURL">jdbc:hsqldb:./localDB</attribute>
+            <attribute name="UserName">sa</attribute>
+            <attribute name="Password"></attribute>
+        </service>
+        
+    </manager>
+    
+</server>

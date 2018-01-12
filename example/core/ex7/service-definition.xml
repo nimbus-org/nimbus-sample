@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <server-property name="Message">true</server-property>
+    
+    <manager>
+        
+        <manager-property name="InitState">Started</manager-property>
+        
+<!-- 環境変数Service1が"enable"の時のみservice要素を有効にする。 -->
+<ifdef name="Service1" value="enable">
+        <service name="Service1"
+                 code="sample.service.SimpleService"
+                 initState="${InitState}">
+            
+<!-- 
+     環境変数Messageが"true"の時のみattribute要素を有効にする。
+     環境変数Messageは、サーバプロパティとして宣言しているが、システムプロパティで上書きする事ができる。
+-->
+<ifdef name="Message" value="true">
+            <attribute name="Message">Hello</attribute>
+</ifdef>
+        </service>
+</ifdef>
+        
+    </manager>
+    
+</server>

@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE flows PUBLIC
+  "-//Nimbus//DTD Nimbus Bean Flow 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/beanflow_1_0.dtd">
+
+<flows>
+    
+    <flow name="SITE1">
+        <step>
+            <target>
+                <static-invoke code="jp.ossc.nimbus.core.ServiceManagerFactory" name="getLogger"/>
+            </target>
+            <invoke name="write">
+                <argument>INFO</argument>
+                <argument type="java.lang.Object" valueType="java.lang.String">SITE1が呼ばれました。</argument>
+            </invoke>
+        </step>
+        <switch>
+            <case test="@input.input.processType@ == 1">
+                <step name="SourceFile">
+                    <result>
+                        <object code="jp.ossc.nimbus.io.OperateFile">
+                            <constructor>
+                                <argument>host/site1</argument>
+                                <argument><input>input.source</input></argument>
+                            </constructor>
+                        </object>
+                    </result>
+                </step>
+                <step name="LocalFile">
+                    <result>
+                        <object code="java.io.File">
+                            <constructor>
+                                <argument>local/site1</argument>
+                                <argument><input>input.source</input></argument>
+                            </constructor>
+                        </object>
+                    </result>
+                </step>
+                <step>
+                    <target><step-ref>SourceFile</step-ref></target>
+                    <invoke name="copyTo">
+                        <argument><step-ref>LocalFile.Path</step-ref></argument>
+                    </invoke>
+                </step>
+                <step>
+                    <target><input>output</input></target>
+                    <invoke name="addFile">
+                        <argument type="java.io.File"><step-ref>LocalFile</step-ref></argument>
+                    </invoke>
+                </step>
+            </case>
+            <case test="@input.input.processType@ == 2">
+                <step name="SourceFile">
+                    <result>
+                        <object code="jp.ossc.nimbus.io.OperateFile">
+                            <constructor>
+                                <argument><input>input.source</input></argument>
+                            </constructor>
+                        </object>
+                    </result>
+                </step>
+                <step name="DestFile">
+                    <result>
+                        <object code="java.io.File">
+                            <constructor>
+                                <argument>host/site1</argument>
+                                <argument><input>input.destination</input></argument>
+                            </constructor>
+                        </object>
+                    </result>
+                </step>
+                <step>
+                    <target><step-ref>SourceFile</step-ref></target>
+                    <invoke name="copyTo">
+                        <argument><step-ref>DestFile.Path</step-ref></argument>
+                    </invoke>
+                </step>
+                <step>
+                    <target><input>output</input></target>
+                    <invoke name="addFile">
+                        <argument type="java.io.File"><step-ref>SourceFile</step-ref></argument>
+                    </invoke>
+                </step>
+            </case>
+        </switch>
+        <step>
+            <result><input/></result>
+        </step>
+    </flow>
+    
+    <flow name="SITE2">
+        <step>
+            <target>
+                <static-invoke code="jp.ossc.nimbus.core.ServiceManagerFactory" name="getLogger"/>
+            </target>
+            <invoke name="write">
+                <argument>INFO</argument>
+                <argument type="java.lang.Object" valueType="java.lang.String">SITE2が呼ばれました。</argument>
+            </invoke>
+        </step>
+        <switch>
+            <case test="@input.input.processType@ == 1">
+                <step name="SourceFile">
+                    <result>
+                        <object code="jp.ossc.nimbus.io.OperateFile">
+                            <constructor>
+                                <argument>host/site2</argument>
+                                <argument><input>input.source</input></argument>
+                            </constructor>
+                        </object>
+                    </result>
+                </step>
+                <step name="LocalFile">
+                    <result>
+                        <object code="java.io.File">
+                            <constructor>
+                                <argument>local/site2</argument>
+                                <argument><step-ref>SourceFile.Name</step-ref></argument>
+                            </constructor>
+                        </object>
+                    </result>
+                </step>
+                <step>
+                    <target><step-ref>SourceFile</step-ref></target>
+                    <invoke name="copyTo">
+                        <argument><step-ref>LocalFile.Path</step-ref></argument>
+                    </invoke>
+                </step>
+                <step>
+                    <target><input>output</input></target>
+                    <invoke name="addFile">
+                        <argument type="java.io.File"><step-ref>LocalFile</step-ref></argument>
+                    </invoke>
+                </step>
+            </case>
+            <case test="@input.input.processType@ == 2">
+                <step name="SourceFile">
+                    <result>
+                        <object code="jp.ossc.nimbus.io.OperateFile">
+                            <constructor>
+                                <argument><input>input.source</input></argument>
+                            </constructor>
+                        </object>
+                    </result>
+                </step>
+                <step name="DestFile">
+                    <result>
+                        <object code="java.io.File">
+                            <constructor>
+                                <argument>host/site2</argument>
+                                <argument><input>input.destination</input></argument>
+                            </constructor>
+                        </object>
+                    </result>
+                </step>
+                <step>
+                    <target><step-ref>SourceFile</step-ref></target>
+                    <invoke name="copyTo">
+                        <argument><step-ref>DestFile.Path</step-ref></argument>
+                    </invoke>
+                </step>
+                <step>
+                    <target><input>output</input></target>
+                    <invoke name="addFile">
+                        <argument type="java.io.File"><step-ref>SourceFile</step-ref></argument>
+                    </invoke>
+                </step>
+            </case>
+        </switch>
+        <step>
+            <result><input/></result>
+        </step>
+    </flow>
+    
+</flows>

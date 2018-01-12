@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager shutdown-hook="true">
+        
+        <!-- コンテキスト情報を保持するContextサービス -->
+        <service name="Context"
+                 code="jp.ossc.nimbus.service.context.SharedContextService">
+            
+            <!-- コンテキスト情報の変更を送受信するRequestConnectionFactoryサービスのサービス名を設定する -->
+            <attribute name="RequestConnectionFactoryServiceName">#RequestConnectionFactory</attribute>
+            
+            <!-- コンテキスト情報の共有を管理するClusterサービスのサービス名を設定する -->
+            <attribute name="ClusterServiceName">#Cluster</attribute>
+            
+            <!-- クライアント/サーバモードを設定する -->
+            <attribute name="Client">${Client}</attribute>
+            
+            <depends>RequestConnectionFactory</depends>
+            <depends>Cluster</depends>
+        </service>
+        
+        <!-- リクエストコネクションファクトリサービス -->
+        <service name="RequestConnectionFactory"
+                 code="jp.ossc.nimbus.service.publish.RequestConnectionFactoryService">
+            
+            <!-- サーバコネクションファクトリサービスのサービス名を設定する -->
+            <attribute name="ServerConnectionFactoryServiceName">#ConnectionFactory</attribute>
+            
+            <!-- メッセージ受信サービスのサービス名を設定する -->
+            <attribute name="MessageReceiverServiceName">#MessageReceiver</attribute>
+            
+            <depends>#ConnectionFactory</depends>
+            <depends>
+                <!-- コンテキスト情報の変更を受信するMessageReceiverサービス -->
+                <service name="MessageReceiver"
+                         code="jp.ossc.nimbus.service.publish.MessageReceiverService">
+                    
+                    <!-- コンテキスト情報の変更を受信するClientConnectionFactoryサービスのサービス名を設定する -->
+                    <attribute name="ClientConnectionFactoryServiceName">#ClientConnectionFactory</attribute>
+                    
+                    <!-- サービス開始時に受信を開始するように設定する -->
+                    <attribute name="StartReceiveOnStart">true</attribute>
+                    
+                    <depends>ClientConnectionFactory</depends>
+                </service>
+            </depends>
+        </service>
+        
+        <!-- ClientConnectionFactoryをクラスタ化するClientConnectionFactoryサービス -->
+        <service name="ClientConnectionFactory"
+                 code="jp.ossc.nimbus.service.publish.ClusterConnectionFactoryService">
+            
+            <!-- ClientConnectionFactoryのリモートオブジェクトを共有するClusterサービスのサービス名を設定する -->
+            <attribute name="ClusterServiceName">#Cluster</attribute>
+            
+            <!-- コンテキスト情報の変更を受信するClientConnectionFactoryサービスのサービス名を設定する -->
+            <attribute name="ClientConnectionFactoryServiceName">#ConnectionFactory</attribute>
+            
+            <!-- 全ての配信者から受信するように設定する -->
+            <attribute name="Multiple">true</attribute>
+            
+            <!-- 配信者が存在しなくても接続できるように設定する -->
+            <attribute name="FlexibleConnect">true</attribute>
+            
+            <depends>
+                <!-- Clusterサービス -->
+                <service name="Cluster"
+                         code="jp.ossc.nimbus.service.keepalive.ClusterService">
+                    <attribute name="BindAddress">0.0.0.0</attribute>
+                    <attribute name="MulticastGroupAddress">224.1.1.1</attribute>
+                    <attribute name="AnonymousUnicastPort">true</attribute>
+                    <attribute name="HeartBeatRetryCount">2</attribute>
+                    <attribute name="JoinOnStart">false</attribute>
+                </service>
+            </depends>
+        </service>
+        
+        <!-- コンテキスト情報の変更を送受信するServerConnectionFactory及びClientConnectionFactoryサービス -->
+        <service name="ConnectionFactory"
+                 code="jp.ossc.nimbus.service.publish.tcp.ConnectionFactoryService">
+            <attribute name="Acknowledge">true</attribute>
+            <attribute name="AsynchSendThreadSize">1</attribute>
+        </service>
+        
+    </manager>
+    
+</server>

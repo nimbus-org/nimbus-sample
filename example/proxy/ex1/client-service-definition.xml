@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- リモートのプロキシとなるRemoteClientサービス-->
+        <service name="Messenger"
+                 code="jp.ossc.nimbus.service.proxy.RemoteClientService">
+            
+            <!-- プロキシするインタフェースを設定する
+              インタフェースを持たないクラスは、プロキシできない。
+            -->
+            <attribute name="RemoteInterfaceClassName">sample.service.Messenger</attribute>
+            
+            <!-- プロキシする実体を呼び出すInvokerサービスのサービス名を設定する-->
+            <attribute name="InvokerServiceName">#Invoker</attribute>
+            
+            <depends>
+                <!-- プロキシする実体を呼び出すInvokerサービス
+                  JNDIからRemoteServerInvokerをlookupして呼び出す。
+                -->
+                <service name="Invoker"
+                         code="jp.ossc.nimbus.service.proxy.invoker.RemoteClientMethodCallInvokerService">
+                    
+                    <!-- RemoteServerInvokerを取得するRepositoryサービスのサービス名を設定する-->
+                    <attribute name="JndiRepositoryServiceName">#LocalRMIRepository</attribute>
+                    
+                    <!-- RemoteServerInvokerのJNDI名を設定する-->
+                    <attribute name="RemoteServerJndiName">nimbus/RemoteServiceServer</attribute>
+                    
+                    <!-- 呼び出したいリモートのサービス名を設定する-->
+                    <attribute name="RemoteServiceName">#Messenger</attribute>
+                    
+                    <depends>
+                        <!-- RMIサーバから取得するリポジトリサービス -->
+                        <service name="LocalRMIRepository"
+                                 code="jp.ossc.nimbus.service.repository.RMIRepositoryService">
+                            <attribute name="Port">1099</attribute>
+                        </service>
+                    </depends>
+                    
+                </service>
+            </depends>
+        </service>
+        
+    </manager>
+    
+</server>

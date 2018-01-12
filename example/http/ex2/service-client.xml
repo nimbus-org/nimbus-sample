@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+<server>
+<!--
+    HTTPでDataSetのXMLを送って、レスポンスでXMLをDataSetとして取得するサンプル
+-->
+    <default-log>
+        <information output="false"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- HTTP接続サービス -->
+        <service name="HttpClientFactory"
+                 code="jp.ossc.nimbus.service.http.httpclient.HttpClientFactoryService">
+            
+            <!-- HTTP接続コネクションタイムアウト -->
+            <attribute name="ConnectionTimeout">500</attribute>
+            
+            <!-- HTTP接続応答タイムアウト -->
+            <attribute name="SoTimeout">1000</attribute>
+            
+            <!-- HTTPリクエストヘッダ Content-Type -->
+            <attribute name="RequestContentType">application/xml</attribute>
+            
+            <!-- HTTPリクエストヘッダ Content-Type charset -->
+            <attribute name="RequestCharacterEncoding">UTF-8</attribute>
+            
+            <!-- HTTPリクエストヘッダ Accept-Encoding -->
+            <attribute name="RequestHeaders(Accept-Encoding)">gzip</attribute>
+            
+            <!-- HTTPリクエストヘッダ Content-Encoding -->
+            <attribute name="RequestHeaders(Content-Encoding)">gzip</attribute>
+            
+            <!-- HTTPレスポンスオブジェクト変換サービス -->
+            <attribute name="ResponseStreamConverterServiceName">#DataSetXpathConverter</attribute>
+            
+            <!-- リクエスト設定 login -->
+            <attribute name="Request(login)">
+                <object code="jp.ossc.nimbus.service.http.httpclient.PostHttpRequestImpl">
+                    <!-- 接続先URL -->
+                    <attribute name="URL">http://localhost:8080/sample/login.do</attribute>
+                </object>
+            </attribute>
+            <!-- レスポンス設定 login -->
+            <attribute name="Response(login)">
+                <object code="jp.ossc.nimbus.service.http.httpclient.BindingHttpResponse">
+                    <attribute name="ResponseObject">
+                        <object code="jp.ossc.nimbus.beans.dataset.DataSet">
+                            <attribute name="HeaderSchema(AuthInfo)">
+                                XPATH:sessionId,java.lang.String,,,,/authInfo/sessionId/text()
+                                XPATH:userAttr1,int,,,,/authInfo/userAttr1/text()
+                                XPATH:userAttr2,double,,,,/authInfo/userAttr2/text()
+                                XPATH:userAttr3,java.util.Date,,,,/authInfo/userAttr3/text()
+                            </attribute>
+                        </object>
+                    </attribute>
+                </object>
+            </attribute>
+            
+            <depends>
+                <!-- DataSet⇔XML変換サービス -->
+                <service name="DataSetXpathConverter"
+                         code="jp.ossc.nimbus.util.converter.DataSetXpathConverter"/>
+            </depends>
+        </service>
+        
+    </manager>
+</server>

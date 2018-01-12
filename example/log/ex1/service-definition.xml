@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- ログ出力を行うLoggerサービス -->
+        <service name="Log"
+                 code="jp.ossc.nimbus.service.log.LogService">
+            
+            <!-- デバッグメソッドによるログ出力を設定する -->
+            <attribute name="DebugEnabled">true</attribute>
+            
+            <!-- SYSTEM_DEBUGレベルのログ出力を設定する -->
+            <attribute name="SystemDebugEnabled">true</attribute>
+            
+            <!-- SYSTEM_INFOレベルのログ出力を設定する -->
+            <attribute name="SystemInfoEnabled">true</attribute>
+            
+            <!-- SYSTEM_WARNレベルのログ出力を設定する -->
+            <attribute name="SystemWarnEnabled">true</attribute>
+            
+            <!-- SYSTEM_ERRORレベルのログ出力を設定する -->
+            <attribute name="SystemErrorEnabled">true</attribute>
+            
+            <!-- SYSTEM_FATALレベルのログ出力を設定する -->
+            <attribute name="SystemFatalEnabled">true</attribute>
+            
+            <!-- メッセージを提供するMessageRecordFactoryサービスのサービス名を設定する -->
+            <attribute name="MessageRecordFactoryServiceName">#MyMessageRecordFactory</attribute>
+            
+            <depends>
+                
+                <!-- メッセージを提供するMessageRecordFactoryサービス -->
+                <service name="MyMessageRecordFactory"
+                         code="jp.ossc.nimbus.service.message.MessageRecordFactoryService">
+                    
+                    <!-- メッセージ定義ファイルを解釈するMessageRecordインタフェース実装クラスを設定する -->
+                    <attribute name="MessageRecordClassName">jp.ossc.nimbus.service.log.LogMessageRecordImpl</attribute>
+                    
+                    <!-- 使用するメッセージ定義ファイルのクラスパス上のパスを設定する -->
+                    <attribute name="MessageFiles">MyMessage1</attribute>
+                    
+                    <!-- シークレット埋め込みメッセージのON/OFFを設定する -->
+                    <attribute name="SecretMode">true</attribute>
+                    
+                </service>
+                
+            </depends>
+        </service>
+        
+    </manager>
+    
+</server>

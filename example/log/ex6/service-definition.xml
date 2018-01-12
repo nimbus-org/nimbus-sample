@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- ログ出力を行うLoggerサービス -->
+        <service name="Log"
+                 code="jp.ossc.nimbus.service.log.DefaultCommonsLogFactoryService">
+            
+            <!-- Commons Logging のTRACEレベルのログ出力を設定する -->
+            <attribute name="CommonsTraceEnabled">true</attribute>
+            
+            <!-- Commons Logging のDEBUGレベルのログ出力を設定する -->
+            <attribute name="CommonsDebugEnabled">true</attribute>
+            
+            <!-- Commons Logging のINFOレベルのログ出力を設定する -->
+            <attribute name="CommonsInfoEnabled">true</attribute>
+            
+            <!-- Commons Logging のWARNレベルのログ出力を設定する -->
+            <attribute name="CommonsWarnEnabled">true</attribute>
+            
+            <!-- Commons Logging のERRORレベルのログ出力を設定する -->
+            <attribute name="CommonsErrorEnabled">true</attribute>
+            
+            <!-- Commons Logging のFATALレベルのログ出力を設定する -->
+            <attribute name="CommonsFatalEnabled">true</attribute>
+            
+        </service>
+        
+    </manager>
+    
+</server>

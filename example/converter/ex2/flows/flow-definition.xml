@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE flows PUBLIC
+  "-//Nimbus//DTD Nimbus Bean Flow 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/beanflow_1_0.dtd">
+
+<flows>
+    
+    <!-- 変換フロー1 -->
+    <flow name="Convert1">
+        <step>
+            <target><object code="sample.Bean2"/></target>
+            <attribute name="C"><input>A</input></attribute>
+            <attribute name="D"><input>B</input></attribute>
+            <result><this/></result>
+        </step>
+    </flow>
+    
+    <!-- 変換フロー2 -->
+    <flow name="Convert2">
+        <step name="step1">
+            <target><object code="java.lang.StringBuffer"/></target>
+            <attribute name="append"><input>B</input></attribute>
+            <attribute name="append"><input>B</input></attribute>
+        </step>
+        <step>
+            <target><object code="sample.Bean2"/></target>
+            <attribute name="C">
+                <expression>@input.A@ * 100</expression>
+            </attribute>
+            <attribute name="D">
+                <step-ref>step1.target.toString</step-ref>
+            </attribute>
+            <result><this/></result>
+        </step>
+    </flow>
+    
+    <!-- 変換フロー3 -->
+    <flow name="Convert3">
+        <step>
+            <target><object code="sample.Bean1"/></target>
+            <attribute name="A"><input>C.intValue</input></attribute>
+            <attribute name="B"><input>D</input></attribute>
+            <result><this/></result>
+        </step>
+    </flow>
+    
+</flows>

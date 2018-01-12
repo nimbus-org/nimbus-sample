@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- JNDIからlookupするJndiFinderサービス -->
+        <service name="JndiFinder"
+                 code="jp.ossc.nimbus.service.jndi.CachedJndiFinderService">
+            
+            <!-- InitialContextの初期化プロパティを設定する -->
+            <attribute name="Environment">
+                java.naming.factory.initial=org.jnp.interfaces.NamingContextFactory
+                java.naming.factory.url.pkgs=org.jboss.naming:org.jnp.interfaces
+                java.naming.provider.url=localhost:1099
+            </attribute>
+            
+            <!-- lookupするJNDI名のプレフィクスを設定する -->
+            <attribute name="Prefix">sample/</attribute>
+            
+            <!-- lookupしたオブジェクトをキャッシュするCacheMapサービスのサービス名を設定する -->
+            <attribute name="CacheMapServiceName">#JndiCache</attribute>
+            
+            <!-- JNDIサーバが生きているか確認するかどうかを設定する
+              JNDIサーバが死んだ事を検知した場合、エラーログを出力して、
+              キャッシュを削除する。
+              また、JNDIサーバが生き返った場合、その旨を通知ログで知らせる。
+            -->
+            <attribute name="AliveCheckJNDIServer">true</attribute>
+            
+            <!-- JNDIサーバの生存チェック間隔[ms]を設定する -->
+            <attribute name="AliveCheckJNDIServerInterval">1000</attribute>
+            
+            <depends>
+                <!-- メモリ中にキャッシュするCacheMapサービス -->
+                <service name="JndiCache"
+                         code="jp.ossc.nimbus.service.cache.MemoryCacheMapService"/>
+            </depends>
+            
+        </service>
+        
+    </manager>
+    
+</server>

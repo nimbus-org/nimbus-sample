@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- JMXでMBeanを監視するサービス -->
+        <!-- 自分自身のJVMにJMX接続して、ヒープメモリの最大容量と空き容量を1秒間隔に監視して、コンソールに出力する -->
+        <service name="Watcher"
+                 code="jp.ossc.nimbus.service.jmx.MBeanWatcherService">
+            
+            <!-- 接続するJMXサーバのURLを設定する -->
+            <attribute name="ServiceURL">service:jmx:rmi:///jndi/rmi://localhost:1234/jmxrmi</attribute>
+            
+            <!-- 監視間隔[ms]を設定する -->
+            <attribute name="Interval">1000</attribute>
+            
+            <!-- 出力先のカテゴリサービス名を設定する -->
+            <attribute name="CategoryServiceName">#ConsoleCategory</attribute>
+            
+            <!-- 監視するMBeanのオブジェクト名を設定する -->
+            <attribute name="ObjectName">java.lang:type=Memory</attribute>
+            
+            <!-- 監視するターゲットを追加する -->
+            <!-- タイムスタンプ -->
+            <invoke name="addTarget">
+                <argument type="jp.ossc.nimbus.service.jmx.MBeanWatcherService$Target">
+                    
+                    <!-- タイムスタンプを取得するターゲット -->
+                    <object code="jp.ossc.nimbus.service.jmx.MBeanWatcherService$Timestamp">
+                        
+                        <!-- タイムスタンプのフォーマットを指定する -->
+                        <attribute name="Format">yyyy/MM/dd HH:mm:ss</attribute>
+                        
+                    </object>
+                </argument>
+            </invoke>
+            
+            <!-- 監視するターゲットを追加する -->
+            <!-- ヒープメモリの最大容量 -->
+            <!-- MBean"java.lang:type=Memory"の属性HeapMemoryUsage（型:javax.management.openmbean.CompositeDataSupport）のプロパティ"committed" -->
+            <invoke name="addTarget">
+                <argument type="jp.ossc.nimbus.service.jmx.MBeanWatcherService$Target">
+                    
+                    <!-- ターゲットをラップして、そのプロパティを取得するターゲット -->
+                    <object code="jp.ossc.nimbus.service.jmx.MBeanWatcherService$Property">
+                        
+                        <!-- カテゴリに出力する時のキー名を設定する -->
+                        <attribute name="Key">TotalMemory</attribute>
+                        
+                        <!-- ラップしたターゲットから取得するプロパティ名を設定する -->
+                        <attribute name="Property">(committed)</attribute>
+                        
+                        <!-- ラップするターゲットを設定する -->
+                        <attribute name="Target">
+                            
+                            <!-- MBeanの属性を取得するターゲット -->
+                            <object code="jp.ossc.nimbus.service.jmx.MBeanWatcherService$Attribute">
+                                
+                                <!-- MBeanの属性名を設定する -->
+                                <attribute name="Name">HeapMemoryUsage</attribute>
+                                
+                                <!-- コンテキストに出力するキー名を設定する -->
+                                <attribute name="ContextKey">HeapMemoryUsage</attribute>
+                            </object>
+                            
+                        </attribute>
+                        
+                    </object>
+                    
+                </argument>
+            </invoke>
+            
+            <!-- 監視するターゲットを追加する -->
+            <!-- ヒープメモリの空き容量 -->
+            <!-- 
+                MBean"java.lang:type=Memory"の
+                  属性HeapMemoryUsage（型:javax.management.openmbean.CompositeDataSupport）のプロパティ"committed"
+                と
+                  属性HeapMemoryUsage（型:javax.management.openmbean.CompositeDataSupport）のプロパティ"used"
+                の差
+            -->
+            <invoke name="addTarget">
+                <argument type="jp.ossc.nimbus.service.jmx.MBeanWatcherService$Target">
+                    
+                    <!-- 二つのターゲットの差を取るターゲット -->
+                    <object code="jp.ossc.nimbus.service.jmx.MBeanWatcherService$SubtractOperation">
+                        
+                        <!-- カテゴリに出力する時のキー名を設定する -->
+                        <attribute name="Key">FreeMemory</attribute>
+                        
+                        <!-- 引き算の第一項になるターゲットを設定する -->
+                        <attribute name="Target">
+                            
+                            <!-- ターゲットをラップして、そのプロパティを取得するターゲット -->
+                            <object code="jp.ossc.nimbus.service.jmx.MBeanWatcherService$Property">
+                                
+                                <!-- ラップしたターゲットから取得するプロパティ名を設定する -->
+                                <attribute name="Property">(committed)</attribute>
+                                
+                                <!-- ラップするターゲットを設定する -->
+                                <attribute name="Target">
+                                    
+                                    <!-- コンテキストから値を取得するターゲット -->
+                                    <object code="jp.ossc.nimbus.service.jmx.MBeanWatcherService$Context">
+                                        
+                                        <!-- コンテキストから取得するキー名を設定する -->
+                                        <attribute name="ContextKey">HeapMemoryUsage</attribute>
+                                    </object>
+                                    
+                                </attribute>
+                                
+                            </object>
+                            
+                        </attribute>
+                        
+                        <!-- 引き算の第二項になるターゲットを設定する -->
+                        <attribute name="SecondTarget">
+                            
+                            <!-- ターゲットをラップして、そのプロパティを取得するターゲット -->
+                            <object code="jp.ossc.nimbus.service.jmx.MBeanWatcherService$Property">
+                                
+                                <!-- ラップしたターゲットから取得するプロパティ名を設定する -->
+                                <attribute name="Property">(used)</attribute>
+                                
+                                <!-- ラップするターゲットを設定する -->
+                                <attribute name="Target">
+                                    
+                                    <!-- コンテキストから値を取得するターゲット -->
+                                    <object code="jp.ossc.nimbus.service.jmx.MBeanWatcherService$Context">
+                                        
+                                        <!-- コンテキストから取得するキー名を設定する -->
+                                        <attribute name="ContextKey">HeapMemoryUsage</attribute>
+                                    </object>
+                                    
+                                </attribute>
+                                
+                            </object>
+                            
+                        </attribute>
+                        
+                    </object>
+                    
+                </argument>
+            </invoke>
+            <depends>ConsoleCategory</depends>
+        </service>
+        
+        <!-- コンソールに出力するカテゴリサービス -->
+        <service name="ConsoleCategory"
+                 code="jp.ossc.nimbus.service.writer.SimpleCategoryService">
+            <attribute name="WritableRecordFactoryServiceName">#ConsoleWritableRecordFactory</attribute>
+            <attribute name="MessageWriterServiceName">#ConsoleWriter</attribute>
+            <depends>
+                <service name="ConsoleWritableRecordFactory"
+                         code="jp.ossc.nimbus.service.writer.PropertyWritableRecordFactoryService">
+                    <attribute name="Format">%Timestamp%,%TotalMemory%,%FreeMemory%</attribute>
+                </service>
+            </depends>
+            <depends>
+                <service name="ConsoleWriter"
+                         code="jp.ossc.nimbus.service.writer.ConsoleWriterService"/>
+            </depends>
+        </service>
+        
+    </manager>
+    
+</server>

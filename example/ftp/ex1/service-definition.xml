@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- FTPClientを生成するFTPClientFactoryサービス -->
+        <service name="FTPClientFactory"
+                 code="jp.ossc.nimbus.service.ftp.ftpclient.FTPClientFactoryService">
+            
+            <!-- ローカルのホームディレクトリを設定する -->
+            <attribute name="HomeDirectory">.</attribute>
+            
+            <!-- FTPサーバのホスト名を設定する -->
+            <attribute name="HostName">${HOST}</attribute>
+            
+            <!-- FTPサーバのポート番号を設定する -->
+            <attribute name="Port">${PORT}</attribute>
+            
+            <!-- FTPサーバのユーザを設定する -->
+            <attribute name="UserName">${USER}</attribute>
+            
+            <!-- FTPサーバのパスーワードを設定する -->
+            <attribute name="Password">${PASSWORD}</attribute>
+        </service>
+        
+    </manager>
+    
+</server>

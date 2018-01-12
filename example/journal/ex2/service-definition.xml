@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- ジャーナルサービス -->
+        <service name="Journal"
+                 code="jp.ossc.nimbus.service.journal.ThreadManagedJournalService">
+            <attribute name="EditorFinderName">#EditorFinder</attribute>
+            <attribute name="WritableElementKey">Journal for Sample</attribute>
+            <attribute name="SequenceServiceName">#Sequence</attribute>
+            <attribute name="CategoryServiceNames">#Category</attribute>
+            <depends>EditorFinder</depends>
+            <depends>Sequence</depends>
+            <depends>Category</depends>
+        </service>
+        
+        <!-- ジャーナルを編集するJournalEditorを提供するEditorFinderサービス -->
+        <service name="EditorFinder"
+                 code="jp.ossc.nimbus.service.journal.editorfinder.ObjectMappedEditorFinderService">
+            <attribute name="EditorProperties">
+                java.lang.Object=#ObjectJournalEditor
+                java.util.Date=#DateJournalEditor
+                jp.ossc.nimbus.service.journal.RequestJournal=#RequestJournalEditor
+            </attribute>
+            <depends>ObjectJournalEditor</depends>
+            <depends>DateJournalEditor</depends>
+            <depends>RequestJournalEditor</depends>
+        </service>
+        
+        <!-- 任意のオブジェクトを文字列に変換するJournalEditorサービス -->
+        <service name="ObjectJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.ObjectJournalEditorService">
+            <attribute name="OutputKey">true</attribute>
+        </service>
+        
+        <!-- java.util.Dateオブジェクトを文字列に変換するJournalEditorサービス -->
+        <service name="DateJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.DateJournalEditorService">
+            <attribute name="Format">yyyy/MM/dd HH:mm:ss.SSS</attribute>
+        </service>
+        
+        <!-- jp.ossc.nimbus.service.journal.RequestJournalオブジェクトを
+          文字列に変換するJournalEditorサービス
+          RequestJournalオブジェクトは、ジャーナルのルート要素、及び各ステップ
+          のルート要素となっている。
+          このサービスは、RequestJournalオブジェクトを、CSV形式の文字列に変換する。
+        -->
+        <service name="RequestJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.SimpleRequestCSVJournalEditorService"/>
+        
+        <!-- 通番を発番するSequenceサービス
+          ここでは、詳細な説明は行わない。
+        -->
+        <service name="Sequence"
+                 code="jp.ossc.nimbus.service.sequence.StringSequenceService">
+            <attribute name="format">ID_;0,9;0,9;0,9;0,9;0,9;0,9;0,9</attribute>
+        </service>
+        
+        <!-- ジャーナルを出力するCategoryサービス
+          以下は、出力を行うCategoryサービス群であるが、
+          ここでは、詳細な説明は行わない。
+        -->
+        <service name="Category"
+                 code="jp.ossc.nimbus.service.writer.SimpleCategoryService">
+            <attribute name="WritableRecordFactoryServiceName">#WritableRecordFactory</attribute>
+            <attribute name="MessageWriterServiceName">#Writer</attribute>
+            <depends>
+                <!-- 出力情報をフォーマットするWritableRecordFactoryサービス -->
+                <service name="WritableRecordFactory"
+                         code="jp.ossc.nimbus.service.writer.WritableRecordFactoryService">
+                    <attribute name="Format">%Journal for Sample%</attribute>
+                </service>
+            </depends>
+            <depends>
+                <!-- Log4Jを使ってファイルに出力するMessageWriterサービス -->
+                <service name="Writer"
+                         code="jp.ossc.nimbus.service.writer.log4j.FileAppenderWriterService">
+                    <attribute name="Append">false</attribute>
+                    <attribute name="BufferedIO">true</attribute>
+                    <attribute name="BufferSize">1024</attribute>
+                    <attribute name="File">journal.txt</attribute>
+                </service>
+            </depends>
+        </service>
+        
+    </manager>
+    
+</server>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- 暗号化/復号化及びハッシュを行うCryptサービス
+          DESによる暗号化/復号化を行う
+          MD5によるハッシュを行う
+        -->
+        <service name="Crypt"
+                 code="jp.ossc.nimbus.service.crypt.CipherCryptService">
+            
+            <!-- 暗号化/復号化で使用する変換名を設定する -->
+            <attribute name="Transformation">DES/ECB/PKCS5Padding</attribute>
+            
+            <!-- 暗号化/復号化で使用する鍵を設定する -->
+            <attribute name="Key">
+                <object code="java.security.Key">
+                    <constructor>
+                        <invoke name="generateSecret">
+                            <target>
+                                <object code="javax.crypto.SecretKeyFactory">
+                                    <constructor>
+                                        <static-invoke code="javax.crypto.SecretKeyFactory" name="getInstance">
+                                            <argument>DES</argument>
+                                        </static-invoke>
+                                    </constructor>
+                                </object>
+                            </target>
+                            <argument type="java.security.spec.KeySpec">
+                                <object code="javax.crypto.spec.DESKeySpec">
+                                    <constructor>
+                                        <argument type="byte[]">
+                                            0,1,2,3,4,5,6,7
+                                        </argument>
+                                    </constructor>
+                                </object>
+                            </argument>
+                        </invoke>
+                    </constructor>
+                </object>
+            </attribute>
+            
+            <!-- 暗号化/復号化で使用する文字エンコーディングを設定する -->
+            <attribute name="Encoding">UTF-8</attribute>
+            
+            <!-- ハッシュで使用するアルゴリズムを設定する -->
+            <attribute name="HashAlgorithm">MD5</attribute>
+            
+        </service>
+        
+    </manager>
+    
+</server>

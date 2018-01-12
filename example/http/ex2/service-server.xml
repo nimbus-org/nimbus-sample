@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+<server>
+<!--
+    通信相手となるサーバ側のモック
+-->
+    <default-log>
+        <information output="false"/>
+    </default-log>
+    
+    <manager>
+        
+        <service name="TestProxyServer"
+                 code="jp.ossc.nimbus.service.http.proxy.ProxyServerService">
+            <attribute name="Port">8080</attribute>
+            <attribute name="SoTimeout">1000</attribute>
+            <attribute name="ProcessServiceName">#TestProcess</attribute>
+            <depends>TestProcess</depends>
+        </service>
+        
+        <service name="TestProcess"
+                 code="jp.ossc.nimbus.service.http.proxy.TestHttpProcessService">
+            <invoke name="setAction">
+                <argument>
+                    @Header.URLMatcher(.*/login.do).matches@
+                </argument>
+                <argument>
+                    <object code="jp.ossc.nimbus.service.http.proxy.TestHttpProcessService$Action">
+                        <attribute name="RequestOutputFile">./login_request.txt</attribute>
+                        
+                        <attribute name="Header(Content-Type)">application/xml;charset=UTF-8</attribute>
+                        <attribute name="Header(Content-Encoding)">gzip</attribute>
+                        <attribute name="ResponseBodyInputFile">./login_response.xml</attribute>
+                    </object>
+                </argument>
+            </invoke>
+        </service>
+        
+    </manager>
+</server>

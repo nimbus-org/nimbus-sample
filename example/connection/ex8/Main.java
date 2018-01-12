@@ -1,0 +1,120 @@
+
+import java.io.*;
+import java.sql.*;
+import java.util.*;
+
+import jp.ossc.nimbus.core.ServiceManagerFactory;
+import jp.ossc.nimbus.beans.dataset.Record;
+import jp.ossc.nimbus.io.CSVRecordReader;
+import jp.ossc.nimbus.service.connection.ConnectionFactory;
+import jp.ossc.nimbus.service.connection.ConnectionFactoryException;
+import jp.ossc.nimbus.service.connection.PersistentManager;
+import jp.ossc.nimbus.service.connection.PersistentException;
+
+/**
+ * サンプル８実行クラス。
+ */
+public class Main{
+    
+    public static final void main(String[] args){
+        
+        // サービス定義ファイルをロードする
+        if(ServiceManagerFactory.loadManager("service-definition.xml")){
+            System.out.println("サービス定義の読み込みに成功しました。");
+            
+            // ConnectionFactoryサービスを取得する
+            ConnectionFactory factory = (ConnectionFactory)ServiceManagerFactory
+                .getServiceObject("ConnectionFactory");
+            
+            // PersistentManagerサービスを取得する
+            PersistentManager pm = (PersistentManager)ServiceManagerFactory
+                .getServiceObject("PersistentManager");
+            
+            Connection con = null;
+            FileInputStream fis = null;
+            try{
+                // 入力となるユーザリストCSVファイルをオープンする
+                fis = new FileInputStream("userlist.csv");
+                
+                // ストリームをCSVRecordReaderでラップする
+                CSVRecordReader reader = new CSVRecordReader(new InputStreamReader(fis));
+                reader.setCommentPrefix("#");
+                
+                // Connectionの取得
+                con = factory.getConnection();
+                
+                // データベースへのバッチ書込みを行うBatchExecutorを生成する
+                PersistentManager.BatchExecutor executor = pm.createQueryBatchExecutor(con, "insert into MYUSER(name, age, sex) values(?<-{name}, ?<-{age}, ?<-{sex})");
+                // 5件ずつバッチ実行するように設定
+                executor.setAutoBatchPersistCount(5);
+                
+                // CSVファイルを１行ずつ読み込みながらデータベースにバッチ実行でINSERTする
+                Record record = new Record(
+                    ":name,java.lang.String\n"
+                     + ":age,int\n"
+                     + ":sex,int\n"
+                );
+                Record tmpRecord = record;
+                int updateCount = 0;
+                int total = 0;
+                System.out.println("データベースへの書き込み開始");
+                while((tmpRecord = reader.readRecord(tmpRecord)) != null){
+                    updateCount = executor.addBatch(tmpRecord);
+                    if(updateCount > 0){
+                        System.out.println("MYUSERテーブルに " + updateCount + "件 INSERTしました。");
+                    }
+                    total+=updateCount;
+                }
+                updateCount = executor.persist();
+                if(updateCount > 0){
+                    System.out.println("MYUSERテーブルに " + updateCount + "件 INSERTしました。");
+                }
+                total+=updateCount;
+                System.out.println("MYUSERテーブルに合計 " + total + "件 INSERTしました。");
+                executor.close();
+                fis.close();
+                fis = null;
+                
+                // データベースからのカーソル読み出しを行うCursorを生成する
+                PersistentManager.Cursor cursor = pm.createCursor(con, "select name, age, sex from MYUSER", null, null, null);
+                
+                // データベースからSELECTしたレコードを１行ずつカーソル移動しながら出力する
+                System.out.println("データベースからの読み込み開始");
+                while(cursor.next()){
+                    cursor.load(record);
+                    System.out.println("    " + record);
+                }
+                cursor.close();
+            }catch(IOException e){
+                e.printStackTrace();
+                System.exit(-1);
+            }catch(ConnectionFactoryException e){
+                e.printStackTrace();
+                System.exit(-1);
+            }catch(PersistentException e){
+                e.printStackTrace();
+                System.exit(-1);
+            }finally{
+                if(fis != null){
+                    try{
+                        fis.close();
+                    }catch(IOException e){
+                        e.printStackTrace();
+                    }
+                }
+                if(con != null){
+                    try{
+                        con.close();
+                    }catch(SQLException e){
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }else{
+            System.out.println("サービス定義の読み込みに失敗しました。");
+        }
+        
+        // サービス定義ファイルをアンロードする
+        ServiceManagerFactory.unloadManager("service-definition.xml");
+    }
+}

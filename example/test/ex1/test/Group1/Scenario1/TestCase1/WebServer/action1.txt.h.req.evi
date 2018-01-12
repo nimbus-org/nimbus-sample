@@ -1,0 +1,5 @@
+GET /test/action1.bf?param1=hoge&param2=fuga HTTP/1.1
+User-Agent: Jakarta Commons-HttpClient/3.1
+Host: localhost:10000
+
+

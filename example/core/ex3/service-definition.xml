@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- インスタンスが１つだけの通常のサービス定義 -->
+        <service name="Service1"
+                 code="sample.service.POJOService">
+            <attribute name="Message">Service1です</attribute>
+        </service>
+        
+        <!-- インスタンスを取得するたびに生成するファクトリサービス定義 -->
+        <service name="Service2"
+                 code="sample.service.POJOService"
+                 instance="factory">
+            <attribute name="Message">Service2です</attribute>
+        </service>
+        
+        <!-- インスタンスを取得するスレッド毎に生成するファクトリサービス定義 -->
+        <service name="Service3"
+                 code="sample.service.POJOService"
+                 instance="threadlocal">
+            <attribute name="Message">Service3です</attribute>
+        </service>
+        
+        <!-- インスタンスを取得するたびに生成し、マネージャに登録するファクトリサービス定義 -->
+        <service name="Service4"
+                 code="sample.service.POJOService"
+                 instance="factory"
+                 management="true">
+            <attribute name="Message">Service4です</attribute>
+        </service>
+        
+    </manager>
+    
+</server>

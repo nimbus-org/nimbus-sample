@@ -1,0 +1,15 @@
+.*/test/action1.bf
+
+200
+Content-Type:application/json;charset=Windows-31J
+
+interpreter:start
+return response.replaceAll("@DATE@", new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(new java.util.Date()));
+interpreter:end
+text
+{
+    "property1":"hoge",
+    "property2":100,
+    "property3":[true, false],
+    "property4":"@DATE@"
+}

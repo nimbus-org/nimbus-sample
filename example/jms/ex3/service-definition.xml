@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- MessageProducerを取得するJMSMessageProducerFactoryサービス -->
+        <service name="MessageProducerFactory"
+                 code="jp.ossc.nimbus.service.jms.JMSQueueSenderFactoryService">
+            
+            <!-- QueueSessionを取得するJMSSessionFactoryサービスのサービス名を設定する -->
+            <attribute name="JMSSessionFactoryServiceName">#SessionFactory</attribute>
+            
+            <!-- 宛先であるQueueをlookupするJndiFinderサービスのサービス名を設定する -->
+            <attribute name="DestinationFinderServiceName">#JndiFinder</attribute>
+            
+            <!-- 宛先であるQueueのJNDI名を設定する -->
+            <attribute name="DestinationName">queue/ex</attribute>
+            
+            <!-- サービスの起動時にセッションを生成するかどうかを設定する
+              MessageProducerを生成する時に、Sessionを引数で渡さない場合は、trueを指定しておく。
+            -->
+            <attribute name="SessionCreate">true</attribute>
+            
+            <depends>SessionFactory</depends>
+            
+            <depends>JndiFinder</depends>
+            
+        </service>
+        
+        <!-- QueueSessionを取得するJMSSessionFactoryサービス -->
+        <service name="SessionFactory"
+                 code="jp.ossc.nimbus.service.jms.JMSQueueSessionFactoryService">
+            <attribute name="JMSConnectionFactoryServiceName">#ConnectionFactory</attribute>
+            <depends>ConnectionFactory</depends>
+        </service>
+        
+        <!-- QueueConnectionを取得するJMSConnectionFactoryサービス -->
+        <service name="ConnectionFactory"
+                 code="jp.ossc.nimbus.service.jms.JMSQueueConnectionFactoryService">
+            <attribute name="JndiFinderServiceName">#JndiFinder</attribute>
+            <attribute name="ConnectionFactoryName">XAConnectionFactory</attribute>
+            <depends>
+                <!-- JNDIからlookupするJndiFinderサービス -->
+                <service name="JndiFinder"
+                         code="jp.ossc.nimbus.service.jndi.CachedJndiFinderService">
+                    <attribute name="Environment">
+                        java.naming.factory.initial=org.jnp.interfaces.NamingContextFactory
+                        java.naming.factory.url.pkgs=org.jboss.naming:org.jnp.interfaces
+                        java.naming.provider.url=localhost:1099
+                    </attribute>
+                </service>
+            </depends>
+        </service>
+        
+    </manager>
+    
+</server>

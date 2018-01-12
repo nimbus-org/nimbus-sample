@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- キューに格納されたものをメモリ上に保持するQueueサービス -->
+        <service name="Queue"
+                 code="jp.ossc.nimbus.service.queue.DefaultQueueService">
+            
+            <!-- キューに格納されたものをキャッシュするCacheサービスのサービス名を設定する -->
+            <attribute name="CacheServiceName">#FileCache</attribute>
+            
+            <depends>
+                
+                <!-- ファイルにキャッシュするCacheサービス -->
+                <service name="FileCache"
+                         code="jp.ossc.nimbus.service.cache.FileCacheService">
+                    
+                    <!-- ファイルを出力するディレクトリを設定する -->
+                    <attribute name="OutputDirectory">./queue</attribute>
+                    
+                    <!-- ファイル名のプレフィクスを設定する -->
+                    <attribute name="OutputPrefix">element</attribute>
+                    
+                    <!-- 開始時にファイルを読み込むかどうかを設定する -->
+                    <attribute name="LoadOnStart">true</attribute>
+                    
+                    <!-- 破棄時にキャッシュをクリアするかどうかを設定する -->
+                    <attribute name="ClearOnDestroy">false</attribute>
+                    
+                    <!-- JVMの終了時にファイルを消すかどうかを設定する -->
+                    <attribute name="DeleteOnExitWithJVM">false</attribute>
+                    
+                </service>
+                
+            </depends>
+                
+        </service>
+        
+    </manager>
+    
+</server>

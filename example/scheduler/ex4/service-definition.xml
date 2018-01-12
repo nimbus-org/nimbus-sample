@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- スケジューラサービス -->
+        <service name="Scheduler"
+                 code="jp.ossc.nimbus.service.scheduler.TimerSchedulerService">
+            
+            <!-- スケジューラの起動時にスケジュールを開始するかどうかを設定する -->
+            <attribute name="ScheduleOnStart">true</attribute>
+            
+            <!-- スケジュールファクトリサービスのサービス名を設定する -->
+            <attribute name="ScheduleFactoryServiceName">#ScheduleFactory</attribute>
+            
+            <depends>ScheduleFactory</depends>
+            
+        </service>
+        
+        <!-- DBスケジュールファクトリサービス -->
+        <service name="ScheduleFactory"
+                 code="jp.ossc.nimbus.service.scheduler.DatabaseTimerScheduleFactoryService">
+            
+            <!-- スケジュールの状態を管理するScheduleStateManagerサービスのサービス名を設定する -->
+            <attribute name="ScheduleStateManagerServiceName">#ScheduleStateManager</attribute>
+            
+            <!-- JDBCコネクションファクトリサービスのサービス名を設定する -->
+            <attribute name="ConnectionFactoryServiceName">#ConnectionFactory</attribute>
+            
+            <!-- スケジュールのBeanFlowを実行するBeanFlowInvokerFactoryサービスのサービス名を設定する -->
+            <attribute name="ScheduleBeanFlowInvokerFactoryServiceName">#BeanFlowInvokerFactory</attribute>
+            
+            <!-- スケジュールマスタSQLを設定する -->
+            <attribute name="ScheduleMasterQuery">select NAME, FLOW, STARTTIME, ENDTIME, DELAY, PERIODINTERVAL, EXECCOUNT, EXEC_OVER_STARTTIME_FLG, FIXEDRATE_FLG, DEPENDS, WAIT_TIMEOUT, CHECK_INATERVAL, QUEUENAME, GARBAGE_QUEUE from SCHEDULE_MST</attribute>
+            
+            <!-- スケジュールマスタSQL中の「スケジュール名」のインデックスを設定する -->
+            <attribute name="ScheduleNameQueryIndex">1</attribute>
+            
+            <!-- スケジュールマスタSQL中の「BeanFlow名」のインデックスを設定する -->
+            <attribute name="ScheduleBeanFlowNameQueryIndex">2</attribute>
+            
+            <!-- スケジュールマスタSQL中の「開始時間」のインデックスを設定する -->
+            <attribute name="ScheduleStartTimeQueryIndex">3</attribute>
+            
+            <!-- スケジュールマスタSQL中の「終了時間」のインデックスを設定する -->
+            <attribute name="ScheduleEndTimeQueryIndex">4</attribute>
+            
+            <!-- スケジュールマスタSQL中の「遅延時間」のインデックスを設定する -->
+            <attribute name="ScheduleDelayQueryIndex">5</attribute>
+            
+            <!-- スケジュールマスタSQL中の「繰り返し間隔」のインデックスを設定する -->
+            <attribute name="SchedulePeriodQueryIndex">6</attribute>
+            
+            <!-- スケジュールマスタSQL中の「繰り返し回数」のインデックスを設定する -->
+            <attribute name="ScheduleCountQueryIndex">7</attribute>
+            
+            <!-- スケジュールマスタSQL中の「開始時間を過ぎていた場合にスケジュールを開始するかのフラグ」のインデックスを設定する -->
+            <attribute name="ScheduleExecuteWhenOverStartTimeQueryIndex">8</attribute>
+            
+            <!-- スケジュールマスタSQL中の「固定頻度実行フラグ」のインデックスを設定する -->
+            <attribute name="ScheduleFixedRateQueryIndex">9</attribute>
+            
+            <!-- スケジュールマスタSQL中の「依存スケジュール名」のインデックスを設定する -->
+            <attribute name="ScheduleDependsScheduleNamesQueryIndex">10</attribute>
+            
+            <!-- スケジュールマスタSQL中の「依存スケジュール待ちタイムアウト」のインデックスを設定する -->
+            <attribute name="ScheduleDependencyTimeoutQueryIndex">11</attribute>
+            
+            <!-- スケジュールマスタSQL中の「依存スケジュール状態確認間隔」のインデックスを設定する -->
+            <attribute name="ScheduleDependencyConfirmIntervalQueryIndex">12</attribute>
+            
+            <!-- スケジュールマスタSQL中の「キューサービス名」のインデックスを設定する -->
+            <attribute name="ScheduleQueueServiceNameQueryIndex">13</attribute>
+            
+            <!-- スケジュールマスタSQL中の「キューをガベージするかどうか」のインデックスを設定する -->
+            <attribute name="ScheduleGarbageQueueQueryIndex">14</attribute>
+            
+            <depends>ScheduleStateManager</depends>
+            <depends>ConnectionFactory</depends>
+            <depends>BeanFlowInvokerFactory</depends>
+            <depends>Queue</depends>
+            <depends>ScheduleMasterBeanFlowInvoker</depends>
+        </service>
+        
+        <!-- スケジュールの状態を管理するScheduleStateManagerサービス -->
+        <service name="ScheduleStateManager"
+                 code="jp.ossc.nimbus.service.scheduler.DatabaseScheduleStateManagerService">
+            
+            <!-- JDBCコネクションファクトリサービスのサービス名を設定する -->
+            <attribute name="ConnectionFactoryServiceName">ConnectionFactory</attribute>
+            
+            <!-- スケジュール状態テーブルのINSERT SQLを設定する -->
+            <attribute name="ScheduleStateInsertQuery">insert into SCHEDULE_STATE(NAME, STATE, UPDATETIME) values(?, ?, ?)</attribute>
+            
+            <!-- スケジュール状態テーブルのSELECT SQLを設定する -->
+            <attribute name="ScheduleStateSelectQuery">select STATE from SCHEDULE_STATE where NAME = ?</attribute>
+            
+            <!-- スケジュール状態テーブルのUPDATE SQLを設定する -->
+            <attribute name="ScheduleStateUpdateQuery">update SCHEDULE_STATE set STATE = ?, UPDATETIME = ? where NAME = ?</attribute>
+            
+            <!-- スケジュール状態テーブルのDELETE SQLを設定する -->
+            <attribute name="ScheduleStateDeleteQuery">delete from SCHEDULE_STATE where NAME = ?</attribute>
+            
+            <!-- スケジュール状態テーブルのTRUNCATE SQLを設定する -->
+            <attribute name="ScheduleStateTruncateQuery">truncate table SCHEDULE_STATE</attribute>
+            
+            <depends>ConnectionFactory</depends>
+            <depends>ScheduleMasterBeanFlowInvoker</depends>
+        </service>
+        
+        <!-- JDBCドライバ経由でConnectionを取得するConnectionFactoryサービス -->
+        <service name="ConnectionFactory"
+                 code="jp.ossc.nimbus.service.connection.JDBCConnectionFactoryService">
+            <attribute name="DriverName">org.hsqldb.jdbcDriver</attribute>
+            <attribute name="ConnectionURL">jdbc:hsqldb:./localDB</attribute>
+            <attribute name="UserName">sa</attribute>
+            <attribute name="Password"></attribute>
+        </service>
+        
+        <!-- JDBC接続のTransactionResourceを生成するResourceFactoryサービス -->
+        <service name="JDBCTransactionResourceFactory"
+                 code="jp.ossc.nimbus.service.resource.datasource.JdbcConnectionFactoryService">
+            <attribute name="ConnectionFactoryServiceName">#ConnectionFactory</attribute>
+            <depends>ConnectionFactory</depends>
+        </service>
+        
+        <!-- BeanFlowInvokerを生成するBeanFlowInvokerFactoryサービス -->
+        <service name="BeanFlowInvokerFactory"
+                 code="jp.ossc.nimbus.service.beancontrol.DefaultBeanFlowInvokerFactoryService">
+            <attribute name="DirPaths">flows</attribute>
+            <attribute name="BeanFlowInvokerAccessClass">jp.ossc.nimbus.service.beancontrol.BeanFlowInvokerAccessImpl2</attribute>
+            <attribute name="Validate">true</attribute>
+            <depends>JDBCTransactionResourceFactory</depends>
+        </service>
+        
+        <!-- スケジュールの非同期実行に使用するQueueサービス -->
+        <service name="Queue"
+                 code="jp.ossc.nimbus.service.queue.DefaultQueueService"
+                 instance="factory"/>
+        
+        <!-- スケジュールマスタ生成BeanFlowサービス -->
+        <service name="ScheduleMasterBeanFlowInvoker"
+                 code="java.lang.reflect.Method">
+            <constructor>
+                <invoke name="getMethod">
+                    <target>
+                        <object code="java.lang.Class">
+                            <constructor>
+                                <static-invoke code="java.lang.Class" name="forName">
+                                    <argument>jp.ossc.nimbus.service.beancontrol.interfaces.BeanFlowInvoker</argument>
+                                </static-invoke>
+                            </constructor>
+                        </object>
+                    </target>
+                    <argument>invokeFlow</argument>
+                    <argument>
+                        <object code="java.lang.Class[]">
+                            <constructor>
+                                <argument type="java.lang.Class">java.lang.Object</argument>
+                            </constructor>
+                        </object>
+                    </argument>
+                </invoke>
+            </constructor>
+            <invoke name="invoke" callState="Starting">
+                <argument type="java.lang.Object">
+                    <object code="jp.ossc.nimbus.service.beancontrol.interfaces.BeanFlowInvoker">
+                        <constructor>
+                            <invoke name="createFlow">
+                                <target><service-ref>#BeanFlowInvokerFactory</service-ref></target>
+                                <argument>ScheduleMaster</argument>
+                            </invoke>
+                        </constructor>
+                     </object>
+                </argument>
+                <argument>
+                    <object code="java.lang.Object[]">
+                        <constructor>
+                            <argument>Create</argument>
+                        </constructor>
+                    </object>
+                </argument>
+            </invoke>
+            <invoke name="invoke" callState="Stopping">
+                <argument type="java.lang.Object">
+                    <object code="jp.ossc.nimbus.service.beancontrol.interfaces.BeanFlowInvoker">
+                        <constructor>
+                            <invoke name="createFlow">
+                                <target><service-ref>#BeanFlowInvokerFactory</service-ref></target>
+                                <argument>ScheduleMaster</argument>
+                            </invoke>
+                        </constructor>
+                     </object>
+                </argument>
+                <argument>
+                    <object code="java.lang.Object[]">
+                        <constructor>
+                            <argument>Drop</argument>
+                        </constructor>
+                    </object>
+                </argument>
+            </invoke>
+            <depends>BeanFlowInvokerFactory</depends>
+        </service>
+        
+    </manager>
+    
+</server>

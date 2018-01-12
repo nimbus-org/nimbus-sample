@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- メモリに情報をキャッシュするCacheサービス -->
+        <service name="Cache"
+                 code="jp.ossc.nimbus.service.cache.MemoryCacheService">
+            
+            <!-- あふれ制御サービスのサービス名を設定する -->
+            <attribute name="OverflowControllerServiceNames">#OverflowController</attribute>
+            
+            <depends>OverflowController</depends>
+            
+        </service>
+        
+        <!-- あふれ制御を行うOverflowControllerサービス -->
+        <service name="OverflowController"
+                 code="jp.ossc.nimbus.service.cache.DefaultOverflowControllerService">
+            
+            <!-- あふれ検証サービスのサービス名を設定する -->
+            <attribute name="OverflowValidatorServiceName">#OverflowValidator</attribute>
+            
+            <!-- あふれアルゴリズムサービスのサービス名を設定する -->
+            <attribute name="OverflowAlgorithmServiceName">#OverflowAlgorithm</attribute>
+            
+            <depends>OverflowValidator</depends>
+            
+            <depends>OverflowAlgorithm</depends>
+            
+        </service>
+        
+        <!-- キャッシュのサイズであふれ検証を行うOverflowValidatorサービス -->
+        <service name="OverflowValidator"
+                 code="jp.ossc.nimbus.service.cache.CacheSizeOverflowValidatorService">
+            
+            <!-- キャッシュサイズの最大数を設定する -->
+            <attribute name="MaxSize">2</attribute>
+            
+        </service>
+        
+        <!-- FIFOのあふれアルゴリズムを提供するOverflowAlgorithmサービス -->
+        <service name="OverflowAlgorithm"
+                 code="jp.ossc.nimbus.service.cache.FIFOOverflowAlgorithmService"/>
+        
+    </manager>
+    
+</server>

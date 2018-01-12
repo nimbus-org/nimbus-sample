@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- メッセージを提供するMessageRecordFactoryサービス -->
+        <service name="MessageRecordFactory"
+                 code="jp.ossc.nimbus.service.message.MessageRecordFactoryService">
+            
+            <!-- 使用するメッセージ定義ファイルのクラスパス上のパスを設定する -->
+            <attribute name="MessageFiles">MyMessage1</attribute>
+            
+            <!-- シークレット埋め込みメッセージのON/OFFを設定する -->
+            <attribute name="SecretMode">true</attribute>
+            
+            <!-- シークレット埋め込み文字を設定する -->
+            <attribute name="SecretString">*****</attribute>
+            
+        </service>
+        
+    </manager>
+    
+</server>

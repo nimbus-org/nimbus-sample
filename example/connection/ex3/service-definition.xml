@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- ラップしたConnectionを取得するConnectionFactoryサービス -->
+        <service name="ConnectionFactory"
+                 code="jp.ossc.nimbus.service.connection.WrappedConnectionFactoryService">
+            
+            <!-- ラップする元となるConnectionを生成するConnectionFactoryサービスのサービス名を設定する -->
+            <attribute name="ConnectionFactoryServiceName">#RealConnectionFactory</attribute>
+            
+            <!-- ラップする元となるConnectionラッパークラス名を設定する -->
+            <attribute name="ConnectionWrapperClassName">jp.ossc.nimbus.util.sql.WrappedConnection</attribute>
+            
+            <!-- Connectionラッパーに設定するプロパティを設定する
+              ConnectionラッパーとStatementラッパーにJournalサービスを設定する
+            -->
+            <attribute name="ConnectionWrapperProperties">
+                
+                <object code="java.util.LinkedHashMap">
+                    
+                    <!-- ConnectionラッパーにJournalサービスを設定する -->
+                    <attribute name="Journal">
+                        <service-ref>#Journal</service-ref>
+                    </attribute>
+                    
+                    <!-- Statementラッパーに設定するプロパティを設定する -->
+                    <attribute name="StatementProperties">
+                        
+                        <object code="java.util.HashMap">
+                            
+                            <!-- StatementラッパーにJournalサービスを設定する -->
+                            <attribute name="Journal">
+                                <service-ref>#Journal</service-ref>
+                            </attribute>
+                            
+                            <!-- StatementラッパーにSQLMetricsCollectorサービスを設定する -->
+                            <attribute name="SQLMetricsCollector">
+                                <service-ref>#SQLMetricsCollector</service-ref>
+                            </attribute>
+                            
+                        </object>
+                        
+                    </attribute>
+                    
+                    <!-- ConnectionラッパーのJournal開始属性を設定する -->
+                    <attribute name="StartJournal" type="boolean">true</attribute>
+                    
+                </object>
+            </attribute>
+            
+            <depends>
+                <!-- JDBCドライバ経由でConnectionを取得するConnectionFactoryサービス -->
+                <service name="RealConnectionFactory"
+                         code="jp.ossc.nimbus.service.connection.JDBCConnectionFactoryService">
+                    <attribute name="DriverName">org.hsqldb.jdbcDriver</attribute>
+                    <attribute name="ConnectionURL">jdbc:hsqldb:./localDB</attribute>
+                    <attribute name="UserName">sa</attribute>
+                    <attribute name="Password"></attribute>
+                </service>
+            </depends>
+            
+            <depends>Journal</depends>
+            <depends>SQLMetricsCollector</depends>
+            
+        </service>
+        
+        <!-- SQLメトリクス取得サービス -->
+        <service name="SQLMetricsCollector"
+                 code="jp.ossc.nimbus.service.connection.SQLMetricsCollectorService"/>
+        
+        <!-- ジャーナルサービス
+          以下は、全てジャーナルサービスに関連するサービス定義であるが、
+          説明は、ここでは省略する。
+        -->
+        <service name="Journal"
+                 code="jp.ossc.nimbus.service.journal.ThreadManagedJournalService">
+            <attribute name="EditorFinderName">#JournalEditorFinder</attribute>
+            <attribute name="WritableElementKey">Journal for Sample</attribute>
+            <attribute name="CategoryServiceNames">#JournalCategory</attribute>
+            <attribute name="SequenceServiceName">#Sequence</attribute>
+            <depends>JournalEditorFinder</depends>
+            <depends>JournalCategory</depends>
+            <depends>Sequence</depends>
+        </service>
+        
+        <service name="JournalCategory"
+                 code="jp.ossc.nimbus.service.writer.SimpleCategoryService">
+            <attribute name="MessageWriterServiceName">#JournalWriter</attribute>
+            <attribute name="WritableRecordFactoryServiceName">#JournalWritableRecordFactory</attribute>
+            <depends>JournalWriter</depends>
+            <depends>JournalWritableRecordFactory</depends>
+        </service>
+        
+        <service name="JournalWritableRecordFactory"
+                 code="jp.ossc.nimbus.service.writer.WritableRecordFactoryService">
+            <attribute name="Format">%Journal for Sample%</attribute>
+        </service>
+         
+        <service name="JournalWriter"
+                 code="jp.ossc.nimbus.service.writer.log4j.FileAppenderWriterService">
+            <attribute name="Append">false</attribute>
+            <attribute name="BufferedIO">true</attribute>
+            <attribute name="BufferSize">1024</attribute>
+            <attribute name="File">journal.txt</attribute>
+        </service>
+        
+        <service name="JournalEditorFinder"
+                 code="jp.ossc.nimbus.service.journal.editorfinder.ObjectMappedEditorFinderService">
+            <attribute name="EditorProperties">
+                java.lang.Object=#ObjectJournalEditor
+                java.util.Date=#DateJournalEditor
+                java.lang.Throwable=#ThrowableJournalEditor
+                jp.ossc.nimbus.service.journal.RequestJournal=#RequestJournalEditor
+            </attribute>
+            <depends>ObjectJournalEditor</depends>
+            <depends>DateJournalEditor</depends>
+            <depends>ThrowableJournalEditor</depends>
+            <depends>RequestJournalEditor</depends>
+        </service>
+        
+        <service name="ObjectJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.ObjectJournalEditorService">
+            <attribute name="OutputKey">true</attribute>
+        </service>
+        
+        <service name="DateJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.DateJournalEditorService">
+            <attribute name="Format">yyyy/MM/dd HH:mm:ss.SSS</attribute>
+        </service>
+        
+        <service name="ThrowableJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.ThrowableJournalEditorService"/>
+        
+        <service name="RequestJournalEditor"
+                 code="jp.ossc.nimbus.service.journal.editor.SimpleRequestJournalEditorService">
+            <attribute name="OutputKey">true</attribute>
+        </service>
+        
+        <service name="Sequence"
+                 code="jp.ossc.nimbus.service.sequence.StringSequenceService">
+            <attribute name="format">ID_;0,9;0,9;0,9;0,9;0,9;0,9;0,9</attribute>
+        </service>
+        
+    </manager>
+    
+</server>

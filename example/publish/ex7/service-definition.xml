@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager shutdown-hook="true">
+        
+        <!-- リクエストコネクションファクトリサービス -->
+        <service name="RequestConnectionFactory"
+                 code="jp.ossc.nimbus.service.publish.RequestConnectionFactoryService">
+            
+            <!-- サーバコネクションファクトリサービスのサービス名を設定する -->
+            <attribute name="ServerConnectionFactoryServiceName">#ConnectionFactory</attribute>
+            
+            <!-- メッセージ受信サービスのサービス名を設定する -->
+            <attribute name="MessageReceiverServiceName">#MessageReceiver</attribute>
+            
+            <depends>#ConnectionFactory</depends>
+            <depends>#MessageReceiver</depends>
+        </service>
+        
+        <!-- メッセージ受信サービス -->
+        <service name="MessageReceiver"
+                 code="jp.ossc.nimbus.service.publish.MessageReceiverService">
+            
+            <!-- クライアントコネクションファクトリのサービス名を設定する -->
+            <attribute name="ClientConnectionFactoryServiceName">#ClusterConnectionFactory</attribute>
+            
+            <!-- サービスの開始時に受信を開始するように設定する -->
+            <attribute name="StartReceiveOnStart">true</attribute>
+            
+            <depends>#ClusterConnectionFactory</depends>
+        </service>
+        
+        <!-- クラスタコネクションファクトリサービス -->
+        <service name="ClusterConnectionFactory"
+                 code="jp.ossc.nimbus.service.publish.ClusterConnectionFactoryService">
+            
+            <!-- クラスタを組むクライアントコネクションファクトリサービスを設定する -->
+            <attribute name="ClientConnectionFactoryServiceName">#ConnectionFactory</attribute>
+            
+            <!-- クラスタサービスを設定する -->
+            <attribute name="ClusterServiceName">#Cluster</attribute>
+            
+            <!-- 接続相手がいなくても起動できるように設定する -->
+            <attribute name="FlexibleConnect">true</attribute>
+            
+            <!-- 複数の送信元との接続を行うように設定する -->
+            <attribute name="Multiple">true</attribute>
+            
+            <depends>ConnectionFactory</depends>
+            <depends>
+                <!-- クラスタサービス -->
+                <service name="Cluster"
+                         code="jp.ossc.nimbus.service.keepalive.ClusterService">
+                    
+                    <!-- バインドアドレスを設定する -->
+                    <attribute name="BindAddress">0.0.0.0</attribute>
+                    
+                    <!-- マルチキャストアドレスを設定する -->
+                    <attribute name="MulticastGroupAddress">224.1.1.1</attribute>
+                    
+                    <!-- ユニキャストポートを匿名ポートに設定する -->
+                    <attribute name="AnonymousUnicastPort">true</attribute>
+                    
+                    <!-- サービスの開始時にクラスタに参加しないように設定する -->
+                    <attribute name="JoinOnStart">false</attribute>
+                    
+                    <!-- ハートビートのリトライ回数に設定する -->
+                    <attribute name="HeartBeatRetryCount">2</attribute>
+                </service>
+            </depends>
+        </service>
+        
+        <!-- TCPコネクションファクトリサービス -->
+        <service name="ConnectionFactory"
+                 code="jp.ossc.nimbus.service.publish.tcp.ConnectionFactoryService"/>
+        
+    </manager>
+    
+</server>

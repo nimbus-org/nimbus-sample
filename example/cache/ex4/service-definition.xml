@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- メモリに情報をキャッシュするCacheサービス -->
+        <service name="Cache"
+                 code="jp.ossc.nimbus.service.cache.MemoryCacheService">
+            
+            <!-- あふれ制御サービスのサービス名を設定する -->
+            <attribute name="OverflowControllerServiceNames">#OverflowController</attribute>
+            
+            <depends>OverflowController</depends>
+            
+        </service>
+        
+        <!-- あふれ制御を行うOverflowControllerサービス -->
+        <service name="OverflowController"
+                 code="jp.ossc.nimbus.service.cache.DefaultOverflowControllerService">
+            
+            <!-- あふれ検証サービスのサービス名を設定する -->
+            <attribute name="OverflowValidatorServiceName">#OverflowValidator</attribute>
+            
+            <!-- あふれアルゴリズムサービスのサービス名を設定する -->
+            <attribute name="OverflowAlgorithmServiceName">#OverflowAlgorithm</attribute>
+            
+            <!-- あふれ動作サービスのサービス名を設定する -->
+            <attribute name="OverflowActionServiceName">#OverflowAction</attribute>
+            
+            <!-- あふれ制御を非同期で行うためのキューサービスのサービス名を設定する -->
+            <attribute name="QueueServiceName">#Queue</attribute>
+            
+            <depends>OverflowValidator</depends>
+            
+            <depends>OverflowAlgorithm</depends>
+            
+            <depends>OverflowAction</depends>
+            
+            <depends>Queue</depends>
+            
+        </service>
+        
+        <!-- ヒープメモリの使用量であふれ検証を行うOverflowValidatorサービス -->
+        <service name="OverflowValidator"
+                 code="jp.ossc.nimbus.service.cache.MemorySizeOverflowValidatorService"/>
+        
+        <!-- FIFOのあふれアルゴリズムを提供するOverflowAlgorithmサービス -->
+        <service name="OverflowAlgorithm"
+                 code="jp.ossc.nimbus.service.cache.FIFOOverflowAlgorithmService"/>
+        
+        <!-- あふれると２次キャッシュとなる永続化キャッシュに永続化して、
+          強参照からソフト参照にするOverflowActionサービス
+          ソフト参照は、GCによってガベージされる参照であるため、メモリを開放する
+          事ができる。
+          また、ガベージされた参照が必要となった場合は、永続化キャッシュから
+          復元して強参照へ戻す。
+        -->
+        <service name="OverflowAction"
+                 code="jp.ossc.nimbus.service.cache.SoftReferenceOverflowActionService">
+            
+            <!-- 永続化するキャッシュサービスのサービス名を設定する -->
+            <attribute name="PersistCacheServiceName">#SecondaryCache</attribute>
+            
+            <depends>SecondaryCache</depends>
+            
+        </service>
+        
+        <!-- ファイルに情報をキャッシュするCacheサービス -->
+        <service name="SecondaryCache"
+                 code="jp.ossc.nimbus.service.cache.FileCacheService">
+            
+            <!-- 出力ディレクトリを設定する -->
+            <attribute name="OutputDirectory">.</attribute>
+            
+        </service>
+        
+        <!-- キューサービス -->
+        <service name="Queue"
+                 code="jp.ossc.nimbus.service.queue.DefaultQueueService"/>
+        
+    </manager>
+    
+</server>

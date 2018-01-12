@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager shutdown-hook="true">
+        
+        <!-- クラスタサービス -->
+        <service name="Cluster"
+                 code="jp.ossc.nimbus.service.keepalive.ClusterService">
+            
+            <!-- バインドアドレスを設定する -->
+            <attribute name="BindAddress">0.0.0.0</attribute>
+            
+            <!-- マルチキャストグループアドレスを設定する -->
+            <attribute name="MulticastGroupAddress">239.1.1.1</attribute>
+            
+            <!-- ユニキャスト通信用のポートを任意にするように設定する -->
+            <attribute name="AnonymousUnicastPort">true</attribute>
+            
+            <!-- ハートビートのリトライ回数を設定する -->
+<ifdef name="isClient" value="true">
+            <attribute name="HeartBeatRetryCount">6</attribute>
+</ifdef>
+<ifdef name="isClient" value="false">
+            <attribute name="HeartBeatRetryCount">3</attribute>
+</ifdef>
+            
+            <!-- クライアントかどうかを設定する -->
+            <attribute name="Client">${isClient}</attribute>
+            
+            <!-- jp.ossc.nimbus.service.keepalive.ClusterListenerインタフェースの実装サービス名を設定する -->
+            <attribute name="ClusterListenerServiceNames">#ClusterListener</attribute>
+            
+            <depends>ClusterListener</depends>
+        </service>
+        
+        <!-- jp.ossc.nimbus.service.keepalive.ClusterListenerインタフェースの実装サービス -->
+        <service name="ClusterListener"
+                 code="ClusterListener"/>
+        
+    </manager>
+    
+</server>

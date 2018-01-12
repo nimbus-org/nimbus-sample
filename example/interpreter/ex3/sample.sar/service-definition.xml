@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- BeanShellインタープリタサービス -->
+        <service name="Interpreter"
+                 code="jp.ossc.nimbus.service.interpreter.BeanShellInterpreterService">
+            
+            <!-- ログサービスを変数logとして設定する -->
+            <attribute name="VariableObject(log)">
+                <object code="jp.ossc.nimbus.service.log.Logger">
+                    <constructor>
+                        <static-invoke code="jp.ossc.nimbus.core.ServiceManagerFactory" name="getLogger"/>
+                    </constructor>
+                </object>
+            </attribute>
+            
+        </service>
+        
+        <!-- リモートからのサービス呼び出しを中継するプロキシサーバサービス-->
+        <service name="RemoteServiceServer"
+                 code="jp.ossc.nimbus.service.proxy.RemoteServiceServerService">
+            
+            <!-- このプロキシサーバのJNDI名を設定する -->
+            <attribute name="JndiName">nimbus/Interpreter</attribute>
+            
+            <!-- このプロキシサーバを登録するJNDIのRepositoryサービスを設定する -->
+            <attribute name="JndiRepositoryServiceName">#JndiRepository</attribute>
+            
+            <!-- RMIのポート番号を設定する -->
+            <attribute name="RMIPort">11111</attribute>
+            
+            <!-- 中継先のサービス名を設定する -->
+            <attribute name="RemoteServiceName">#Interpreter</attribute>
+            
+            <depends>
+                
+                <!-- このプロキシサーバを登録するJNDIのRepositoryサービス -->
+                <service name="JndiRepository"
+                         code="jp.ossc.nimbus.service.repository.JNDIRepositoryService"/>
+                
+            </depends>
+            
+            <depends>Interpreter</depends>
+            
+        </service>
+        
+    </manager>
+    
+</server>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- アスペクト対象と、アスペクトで挟み込むインタセプタを定義するAspectTranslatorサービス -->
+        <service name="SampleAspect"
+                 code="jp.ossc.nimbus.service.aop.javassist.MethodInterceptorAspectService">
+            <attribute name="TargetClassName">sample\.service\.POJOService</attribute>
+            <attribute name="TargetMethodName">getMessage2</attribute>
+            <attribute name="InterceptorChainListServiceName">#SampleInterceptorChainList</attribute>
+        </service>
+        
+        <!-- アスペクトで挟み込むInterceptorChainListサービス -->
+        <service name="SampleInterceptorChainList"
+                 code="jp.ossc.nimbus.service.aop.DefaultInterceptorChainListService">
+            <attribute name="InterceptorServiceNames">
+                #FlowControlInterceptor
+            </attribute>
+            
+            <depends>
+                
+                <!-- 流量を制御するInterceptorサービス -->
+                <service name="FlowControlInterceptor"
+                         code="jp.ossc.nimbus.service.aop.interceptor.FlowControlInterceptorService">
+                    
+                    <!-- 流量制御のためのSemaphoreサービス名を設定する -->
+                    <attribute name="SemaphoreServiceName">#Semaphore</attribute>
+                    
+                    <depends>
+                        
+                        <!-- 流量制御のためのSemaphoreサービス -->
+                        <service name="Semaphore"
+                                 code="jp.ossc.nimbus.service.semaphore.DefaultSemaphoreService">
+                            
+                            <!-- セマフォのリソース数を設定する -->
+                            <attribute name="ResourceCapacity">3</attribute>
+                            
+                        </service>
+                        
+                    </depends>
+                    
+                </service>
+                
+            </depends>
+            
+        </service>
+        
+    </manager>
+    
+</server>

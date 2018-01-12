@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- スケジューラサービス -->
+        <service name="Scheduler"
+                 code="jp.ossc.nimbus.service.scheduler.TimerSchedulerService">
+            
+            <!-- スケジューラの起動時にスケジュールを開始するかどうかを設定する -->
+            <attribute name="ScheduleOnStart">true</attribute>
+            
+            <!-- スケジュールするスケジュールサービスのサービス名を設定する -->
+            <attribute name="ScheduleServiceNames">
+                #Schedule1
+                #Schedule2
+                #Schedule3
+                #Schedule4
+            </attribute>
+            
+            <!-- スケジュール状態管理サービスのサービス名を設定する -->
+            <attribute name="ScheduleStateManagerServiceName">#ScheduleStateManager</attribute>
+            
+            <depends>
+                
+                <!-- スケジュール状態管理サービス -->
+                <service name="ScheduleStateManager"
+                         code="jp.ossc.nimbus.service.scheduler.DefaultScheduleStateManagerService">
+                    
+                    <!-- スケジュール状態を保持するCacheMapサービスのサービス名を設定する -->
+                    <attribute name="CacheMapServiceName">#FileCacheMap</attribute>
+                    
+                    <depends>
+                        
+                        <!-- ファイルにキャッシュするCacheMapサービス -->
+                        <service name="FileCacheMap"
+                                 code="jp.ossc.nimbus.service.cache.FileCacheMapService">
+                            <attribute name="OutputDirectory">./</attribute>
+                            <attribute name="LoadOnStart">true</attribute>
+                            <attribute name="ClearOnDestroy">false</attribute>
+                            <attribute name="DeleteOnExitWithJVM">false</attribute>
+                        </service>
+                        
+                    </depends>
+                    
+                </service>
+                
+            </depends>
+            
+            <depends>
+                
+                <!-- スケジュール１
+                 今日の0時に実行されるスケジュール
+                -->
+                <service name="Schedule1"
+                         code="jp.ossc.nimbus.service.scheduler.TimerScheduleService">
+                    <attribute name="Name">Task1</attribute>
+                    <attribute name="Task">
+                        <object code="sample.task.SampleTask">
+                            <attribute name="Name">Task1</attribute>
+                        </object>
+                    </attribute>
+                    <attribute name="StartTime">NOW 00:00:00</attribute>
+                </service>
+                
+            </depends>
+            
+            <depends>
+                
+                <!-- スケジュール２
+                 今日の8時に実行されるスケジュール
+                -->
+                <service name="Schedule2"
+                         code="jp.ossc.nimbus.service.scheduler.TimerScheduleService">
+                    <attribute name="Name">Task2</attribute>
+                    <attribute name="Task">
+                        <object code="sample.task.SampleTask">
+                            <attribute name="Name">Task2</attribute>
+                        </object>
+                    </attribute>
+                    <attribute name="StartTime">NOW 08:00:00</attribute>
+                    
+                </service>
+                
+            </depends>
+            
+            <depends>
+                
+                <!-- スケジュール３
+                 今日の16時に実行されるスケジュール
+                -->
+                <service name="Schedule3"
+                         code="jp.ossc.nimbus.service.scheduler.TimerScheduleService">
+                    <attribute name="Name">Task3</attribute>
+                    <attribute name="Task">
+                        <object code="sample.task.SampleTask">
+                            <attribute name="Name">Task3</attribute>
+                        </object>
+                    </attribute>
+                    <attribute name="StartTime">NOW 18:00:00</attribute>
+                    
+                </service>
+                
+            </depends>
+            
+            <depends>
+                
+                <!-- スケジュール４
+                 スケジューラ起動直後に実行され、1秒間隔で実行され続けるスケジュール
+                -->
+                <service name="Schedule4"
+                         code="jp.ossc.nimbus.service.scheduler.TimerScheduleService">
+                    <attribute name="Name">Task4</attribute>
+                    <attribute name="Task">
+                        <object code="sample.task.SampleTask">
+                            <attribute name="Name">Task4</attribute>
+                        </object>
+                    </attribute>
+                    <attribute name="Delay">0</attribute>
+                    <attribute name="Period">1000</attribute>
+                </service>
+                
+            </depends>
+        </service>
+        
+    </manager>
+    
+</server>

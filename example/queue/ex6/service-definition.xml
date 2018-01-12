@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager shutdown-hook="true">
+        
+        <!-- 複数のQueueを使って分流するQueueサービス -->
+        <service name="Queue"
+                 code="jp.ossc.nimbus.service.queue.DistributedQueueService">
+            
+            <!-- 分流するQueueを選択するDistributedQueueSelectorサービスのサービス名を設定する -->
+            <attribute name="DistributedQueueSelectorServiceName">#DistributedQueueSelector</attribute>
+            
+            <depends>
+                <service name="DistributedQueueSelector"
+                         code="jp.ossc.nimbus.service.queue.SimpleDistributedQueueSelectorService">
+                    
+                    <!-- 分流するQueueサービスのサービス名を設定する -->
+                    <attribute name="QueueServiceNames">
+                        #Queue1
+                        #Queue2
+                        #Queue3
+                        #Queue4
+                    </attribute>
+                    
+                    <!-- キューの分流方式を設定する -->
+                    <attribute name="SelectMode">
+                        <static-field-ref code="jp.ossc.nimbus.service.queue.SimpleDistributedQueueSelectorServiceMBean" name="SELECT_MODE_SIZE"/>
+                    </attribute>
+                    
+                    <depends>Queue1</depends>
+                    <depends>Queue2</depends>
+                    <depends>Queue3</depends>
+                    <depends>Queue4</depends>
+                </service>
+            </depends>
+        </service>
+        
+        <!-- メモリ空間を跨いで共有するQueueサービス -->
+        <service name="TemplateQueue"
+                 code="jp.ossc.nimbus.service.queue.SharedQueueService"
+                 instance="template">
+            
+            <!-- コンテキスト情報の変更を送受信するRequestConnectionFactoryサービスのサービス名を設定する -->
+            <attribute name="RequestConnectionFactoryServiceName">#RequestConnectionFactory</attribute>
+            
+            <!-- コンテキスト情報の共有を管理するClusterサービスのサービス名を設定する -->
+            <attribute name="ClusterServiceName">#Cluster</attribute>
+            
+            <depends>RequestConnectionFactory</depends>
+            <depends>Cluster</depends>
+        </service>
+        
+        <!-- メモリ空間を跨いで共有するQueueサービス -->
+        <service name="Queue1"
+                 code="jp.ossc.nimbus.service.queue.SharedQueueService"
+                 template="TemplateQueue">
+            
+            <!-- サブジェクトを設定する -->
+            <attribute name="Subject">Queue1</attribute>
+        </service>
+        
+        <!-- メモリ空間を跨いで共有するQueueサービス -->
+        <service name="Queue2"
+                 code="jp.ossc.nimbus.service.queue.SharedQueueService"
+                 template="TemplateQueue">
+            
+            <!-- サブジェクトを設定する -->
+            <attribute name="Subject">Queue2</attribute>
+        </service>
+        
+        <!-- メモリ空間を跨いで共有するQueueサービス -->
+        <service name="Queue3"
+                 code="jp.ossc.nimbus.service.queue.SharedQueueService"
+                 template="TemplateQueue">
+            
+            <!-- サブジェクトを設定する -->
+            <attribute name="Subject">Queue3</attribute>
+        </service>
+        
+        <!-- メモリ空間を跨いで共有するQueueサービス -->
+        <service name="Queue4"
+                 code="jp.ossc.nimbus.service.queue.SharedQueueService"
+                 template="TemplateQueue">
+            
+            <!-- サブジェクトを設定する -->
+            <attribute name="Subject">Queue4</attribute>
+        </service>
+        
+        <!-- リクエストコネクションファクトリサービス -->
+        <service name="RequestConnectionFactory"
+                 code="jp.ossc.nimbus.service.publish.RequestConnectionFactoryService">
+            
+            <!-- サーバコネクションファクトリサービスのサービス名を設定する -->
+            <attribute name="ServerConnectionFactoryServiceName">#ConnectionFactory</attribute>
+            
+            <!-- メッセージ受信サービスのサービス名を設定する -->
+            <attribute name="MessageReceiverServiceName">#MessageReceiver</attribute>
+            
+            <depends>#ConnectionFactory</depends>
+            <depends>
+                <!-- コンテキスト情報の変更を受信するMessageReceiverサービス -->
+                <service name="MessageReceiver"
+                         code="jp.ossc.nimbus.service.publish.MessageReceiverService">
+                    
+                    <!-- コンテキスト情報の変更を受信するClientConnectionFactoryサービスのサービス名を設定する -->
+                    <attribute name="ClientConnectionFactoryServiceName">#ClientConnectionFactory</attribute>
+                    
+                    <!-- サービス開始時に受信を開始するように設定する -->
+                    <attribute name="StartReceiveOnStart">true</attribute>
+                    <attribute name="MessageListenerQueueDistributedSize">4</attribute>
+                    
+                    <depends>ClientConnectionFactory</depends>
+                </service>
+            </depends>
+        </service>
+        
+        <!-- ClientConnectionFactoryをクラスタ化するClientConnectionFactoryサービス -->
+        <service name="ClientConnectionFactory"
+                 code="jp.ossc.nimbus.service.publish.ClusterConnectionFactoryService">
+            
+            <!-- ClientConnectionFactoryのリモートオブジェクトを共有するClusterサービスのサービス名を設定する -->
+            <attribute name="ClusterServiceName">#Cluster</attribute>
+            
+            <!-- コンテキスト情報の変更を受信するClientConnectionFactoryサービスのサービス名を設定する -->
+            <attribute name="ClientConnectionFactoryServiceName">#ConnectionFactory</attribute>
+            
+            <!-- 全ての配信者から受信するように設定する -->
+            <attribute name="Multiple">true</attribute>
+            
+            <!-- 配信者が存在しなくても接続できるように設定する -->
+            <attribute name="FlexibleConnect">true</attribute>
+            
+            <depends>Cluster</depends>
+            <depends>ConnectionFactory</depends>
+        </service>
+        
+        <!-- Clusterサービス -->
+        <service name="Cluster"
+                 code="jp.ossc.nimbus.service.keepalive.ClusterService">
+            <attribute name="BindAddress">0.0.0.0</attribute>
+            <attribute name="MulticastGroupAddress">224.1.1.1</attribute>
+            <attribute name="MulticastPort">10001</attribute>
+            <attribute name="AnonymousUnicastPort">true</attribute>
+            <attribute name="HeartBeatRetryCount">2</attribute>
+            <attribute name="JoinOnStart">false</attribute>
+        </service>
+        
+        <!-- コンテキスト情報の変更を送受信するServerConnectionFactory及びClientConnectionFactoryサービス -->
+        <service name="ConnectionFactory"
+                 code="jp.ossc.nimbus.service.publish.GroupConnectionFactoryService">
+            
+            <invoke name="addSubjectMapping">
+                <argument type="jp.ossc.nimbus.service.publish.GroupConnectionFactoryService$SubjectMapping">
+                    <object code="jp.ossc.nimbus.service.publish.GroupConnectionFactoryService$SubjectMapping">
+                        <attribute name="Subject">Queue1</attribute>
+                        <attribute name="ClientConnectionFactoryServiceName">#ConnectionFactory1</attribute>
+                        <attribute name="ServerConnectionFactoryServiceName">#ConnectionFactory1</attribute>
+                    </object>
+                </argument>
+            </invoke>
+            <invoke name="addSubjectMapping">
+                <argument type="jp.ossc.nimbus.service.publish.GroupConnectionFactoryService$SubjectMapping">
+                    <object code="jp.ossc.nimbus.service.publish.GroupConnectionFactoryService$SubjectMapping">
+                        <attribute name="Subject">Queue2</attribute>
+                        <attribute name="ClientConnectionFactoryServiceName">#ConnectionFactory2</attribute>
+                        <attribute name="ServerConnectionFactoryServiceName">#ConnectionFactory2</attribute>
+                    </object>
+                </argument>
+            </invoke>
+            <invoke name="addSubjectMapping">
+                <argument type="jp.ossc.nimbus.service.publish.GroupConnectionFactoryService$SubjectMapping">
+                    <object code="jp.ossc.nimbus.service.publish.GroupConnectionFactoryService$SubjectMapping">
+                        <attribute name="Subject">Queue3</attribute>
+                        <attribute name="ClientConnectionFactoryServiceName">#ConnectionFactory3</attribute>
+                        <attribute name="ServerConnectionFactoryServiceName">#ConnectionFactory3</attribute>
+                    </object>
+                </argument>
+            </invoke>
+            <invoke name="addSubjectMapping">
+                <argument type="jp.ossc.nimbus.service.publish.GroupConnectionFactoryService$SubjectMapping">
+                    <object code="jp.ossc.nimbus.service.publish.GroupConnectionFactoryService$SubjectMapping">
+                        <attribute name="Subject">Queue4</attribute>
+                        <attribute name="ClientConnectionFactoryServiceName">#ConnectionFactory4</attribute>
+                        <attribute name="ServerConnectionFactoryServiceName">#ConnectionFactory4</attribute>
+                    </object>
+                </argument>
+            </invoke>
+            
+            <depends>ConnectionFactory1</depends>
+            <depends>ConnectionFactory2</depends>
+            <depends>ConnectionFactory3</depends>
+            <depends>ConnectionFactory4</depends>
+        </service>
+        
+        <service name="TemplateConnectionFactory"
+                 code="jp.ossc.nimbus.service.publish.tcp.ConnectionFactoryService"
+                 instance="template">
+            <attribute name="Acknowledge">true</attribute>
+        </service>
+        <service name="ConnectionFactory1"
+                 code="jp.ossc.nimbus.service.publish.tcp.ConnectionFactoryService"
+                 template="#TemplateConnectionFactory"/>
+        <service name="ConnectionFactory2"
+                 code="jp.ossc.nimbus.service.publish.tcp.ConnectionFactoryService"
+                 template="#TemplateConnectionFactory"/>
+        <service name="ConnectionFactory3"
+                 code="jp.ossc.nimbus.service.publish.tcp.ConnectionFactoryService"
+                 template="#TemplateConnectionFactory"/>
+        <service name="ConnectionFactory4"
+                 code="jp.ossc.nimbus.service.publish.tcp.ConnectionFactoryService"
+                 template="#TemplateConnectionFactory"/>
+        
+    </manager>
+    
+</server>

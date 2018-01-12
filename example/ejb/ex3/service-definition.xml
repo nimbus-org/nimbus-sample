@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- EJBFactoryをグルーピングするEJBFactoryサービス-->
+        <service name="EJBFactory"
+                 code="jp.ossc.nimbus.service.ejb.GroupEJBFactoryService">
+            
+            <!-- EJB名とEJBFactoryサービス名のマッピングを設定する
+              EJB名は、正規表現で指定可能です。
+            -->
+            <attribute name="NameAndEJBFactoryServiceNameMapping">
+                Messenger=#UnitEJBFactory
+            </attribute>
+            
+            <!-- NameAndEJBFactoryServiceNameMapping属性で設定していない
+              EJB名のEJBに対するEJBFactoryサービスのサービス名を設定する。
+            -->
+            <attribute name="DefaultEJBFactoryServiceName">#AnyEJBFactory</attribute>
+            
+            <depends>UnitEJBFactory</depends>
+            <depends>AnyEJBFactory</depends>
+        </service>
+        
+        <!-- 特定のEJB参照を取得するEJBFactoryサービス-->
+        <service name="UnitEJBFactory"
+                 code="jp.ossc.nimbus.service.ejb.UnitEJBFactoryService">
+            <attribute name="HomeType">sample.ejb.MessengerHome</attribute>
+            <attribute name="RemoteType">sample.ejb.Messenger</attribute>
+            <attribute name="JndiFinderServiceName">#JndiFinder</attribute>
+            <depends>JndiFinder</depends>
+        </service>
+        
+        <!-- 任意のEJB参照を取得するEJBFactoryサービス-->
+        <service name="AnyEJBFactory"
+                 code="jp.ossc.nimbus.service.ejb.InvocationEJBFactoryService">
+            <attribute name="JndiFinderServiceName">#JndiFinder</attribute>
+            <depends>JndiFinder</depends>
+        </service>
+        
+        <!-- JNDIからlookupするJndiFinderサービス -->
+        <service name="JndiFinder"
+                 code="jp.ossc.nimbus.service.jndi.CachedJndiFinderService">
+            <attribute name="Environment">
+                java.naming.factory.initial=org.jnp.interfaces.NamingContextFactory
+                java.naming.factory.url.pkgs=org.jboss.naming:org.jnp.interfaces
+                java.naming.provider.url=localhost:1099
+            </attribute>
+            <attribute name="Prefix">sample/</attribute>
+            <attribute name="CacheMapServiceName">#JndiCache</attribute>
+            <depends>
+                <!-- メモリ中にキャッシュするCacheMapサービス -->
+                <service name="JndiCache"
+                         code="jp.ossc.nimbus.service.cache.MemoryCacheMapService"/>
+            </depends>
+        </service>
+        
+    </manager>
+    
+</server>

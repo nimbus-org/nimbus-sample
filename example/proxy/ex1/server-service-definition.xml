@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- リモートから呼び出されるサンプルサービス-->
+        <service name="Messenger"
+                 code="sample.service.POJOService">
+            <attribute name="Message">Hello!</attribute>
+        </service>
+        
+        <!-- リモートからのサービス呼び出しを中継するRemoteServerInvokerサービス-->
+        <service name="RemoteServiceServer"
+                 code="jp.ossc.nimbus.service.proxy.RemoteServiceServerService">
+            
+            <!-- RemoteServerInvokerのJNDI名を設定する -->
+            <attribute name="JndiName">nimbus/RemoteServiceServer</attribute>
+            
+            <!-- RemoteServerInvokerをRMIサーバに登録するRepositoryサービスのサービス名を設定する -->
+            <attribute name="JndiRepositoryServiceName">#LocalRMIRepository</attribute>
+            
+            <!-- RemoteServerInvokerがRMIで通信する際のポート番号を設定する -->
+            <attribute name="RMIPort">11111</attribute>
+            
+            <depends>
+                <!-- RMIサーバに登録するリポジトリサービス -->
+                <service name="LocalRMIRepository"
+                         code="jp.ossc.nimbus.service.repository.RMIRepositoryService">
+                    <attribute name="CreateRegistry">true</attribute>
+                    <attribute name="Port">1099</attribute>
+                </service>
+            </depends>
+        </service>
+        
+    </manager>
+    
+</server>

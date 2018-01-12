@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- JDBCドライバ経由でConnectionを取得するConnectionFactoryサービス -->
+        <service name="ConnectionFactory"
+                 code="jp.ossc.nimbus.service.connection.JDBCConnectionFactoryService">
+            
+            <!-- JDBCドライバのクラス名を設定する -->
+            <attribute name="DriverName">org.hsqldb.jdbcDriver</attribute>
+            
+            <!-- JDBC接続URLを設定する -->
+                    <attribute name="ConnectionURL">jdbc:hsqldb:./localDB</attribute>
+            
+            <!-- JDBC接続ユーザ名を設定する -->
+            <attribute name="UserName">sa</attribute>
+            
+            <!-- JDBC接続パスワードを設定する -->
+            <attribute name="Password"></attribute>
+            
+        </service>
+        
+    </manager>
+    
+</server>

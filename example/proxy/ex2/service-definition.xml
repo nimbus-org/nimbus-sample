@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- リモートのプロキシとなるRemoteClientサービス-->
+        <service name="Messenger"
+                 code="jp.ossc.nimbus.service.proxy.RemoteClientService">
+            <attribute name="RemoteInterfaceClassName">sample.service.Messenger</attribute>
+            <attribute name="InvokerServiceName">#Invoker</attribute>
+            <depends>
+                <!-- プロキシする実体を呼び出すInvokerサービス
+                  RemoteServerInvokerインタフェースを持つEJBを呼び出す。
+                -->
+                <service name="Invoker"
+                         code="jp.ossc.nimbus.service.proxy.invoker.RemoteClientEJBCallInvokerService">
+                    
+                    <!-- RemoteServerInvoker EJBを取得するEJBFactoryサービスのサービス名を設定する-->
+                    <attribute name="EJBFactoryServiceName">#EJBFactory</attribute>
+                    
+                    <!-- RemoteServerInvoker EJBのJNDI名を設定する-->
+                    <attribute name="RemoteServerEJBJndiName">nimbus/RemoteServiceServer</attribute>
+                    
+                    <!-- 呼び出したいリモートのサービス名を設定する-->
+                    <attribute name="RemoteServiceName">#Messenger</attribute>
+                    
+                    <depends>EJBFactory</depends>
+                    
+                </service>
+            </depends>
+        </service>
+        
+        <!-- 特定のEJBを生成するEJBFactoryサービス -->
+        <service name="EJBFactory"
+                 code="jp.ossc.nimbus.service.ejb.UnitEJBFactoryService">
+            <attribute name="HomeType">jp.ossc.nimbus.service.proxy.RemoteServiceServerEJBHome</attribute>
+            <attribute name="RemoteType">jp.ossc.nimbus.service.proxy.RemoteServiceServerEJBObject</attribute>
+            <attribute name="JndiFinderServiceName">#JndiFinder</attribute>
+            <depends>JndiFinder</depends>
+        </service>
+        
+        <!-- JNDIからlookupするJndiFinderサービス -->
+        <service name="JndiFinder"
+                 code="jp.ossc.nimbus.service.jndi.CachedJndiFinderService">
+            <attribute name="Environment">
+                java.naming.factory.initial=org.jnp.interfaces.NamingContextFactory
+                java.naming.factory.url.pkgs=org.jboss.naming:org.jnp.interfaces
+                java.naming.provider.url=localhost:1099
+            </attribute>
+            <attribute name="CacheMapServiceName">#JndiCache</attribute>
+            <depends>
+                <!-- メモリ中にキャッシュするCacheMapサービス -->
+                <service name="JndiCache"
+                         code="jp.ossc.nimbus.service.cache.MemoryCacheMapService"/>
+            </depends>
+        </service>
+        
+    </manager>
+    
+</server>

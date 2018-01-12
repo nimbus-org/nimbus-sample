@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE scenario PUBLIC
+  "-//Nimbus//DTD Nimbus Scenario Resource 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/scenario_1_0.dtd">
+
+<scenario creator                      ="シナリオ作成者１"
+          expectedCost                 ="200"
+          scheduledCreateStartDate     ="2016/12/12 09:00"
+          scheduledCreateEndDate       ="2016/12/12 10:00"
+          createStartDate              ="2016/12/12 10:00"
+          createEndDate                ="2016/12/12 12:00"
+          scheduledExcutor             ="シナリオ実行者１"
+          scheduledExcuteDate          ="2016/12/19"
+          progress                     ="30"
+          cost                         ="150"
+          defaultTestCaseErrorContinue ="true">
+    
+    <title>シナリオ１</title>
+    <description>シナリオ１の説明です。</description>
+    
+    <category name="リリース" value="フェーズ１"/>
+    <category name="正常/異常" value="正常"/>
+    
+    <testcase id                       ="TestCase1"
+              scheduledCreateStartDate ="2016/12/15 09:00"
+              scheduledCreateEndDate   ="2016/12/15 10:00"
+              createStartDate          ="2016/12/15 10:00"
+              createEndDate            ="2016/12/15 12:00"
+              expectedCost             ="60"
+              progress                 ="50"
+              cost                     ="100"
+              errorContinue            ="true">
+        
+        <title>ケース１</title>
+        <description>ケース１の説明です。</description>
+        
+        <category name="リリース" value="フェーズ１"/>
+        <category name="正常/異常" value="正常"/>
+        <category name="機能" value="機能１"/>
+        
+        <action id="HTTP送信" type="action" serviceName="Nimbus#HttpRequestAction">
+            <title>HTTPリクエストを送信します。</title>
+            <description>WebServerにHTTPリクエストを送信します。</description>
+            <resources>
+                <resource name="HTTP送信.txt"/>
+            </resources>
+        </action>
+        <action id="メッセージ受信登録" type="action" serviceName="Nimbus#MessageReceiverListenAction">
+            <title>メッセージの受信登録を行います。</title>
+            <description>メッセージを受信できるように受信登録を行います。</description>
+            <resources>
+                <resource>
+                    Subject1,hoge
+                </resource>
+            </resources>
+        </action>
+        <action id="メッセージ送信" type="action" serviceName="Nimbus#RecordServerConnectionSendChainAction">
+            <title>メッセージを送信します。</title>
+            <description>メッセージを送信します。</description>
+            <resources>
+                <resource>
+                    import jp.ossc.nimbus.beans.dataset.Record;
+                    Record record = new Record(
+                        ":name,java.lang.String"
+                         + "\n:age,int"
+                         + "\n:time,java.util.Date,,jp.ossc.nimbus.util.converter.DateFormatConverter{ConvertType=jp.ossc.nimbus.util.converter.DateFormatConverter.DATE_TO_STRING;Format=yyyyMMddHHmmss}"
+                    );
+                    record.setProperty("time", new java.util.Date());
+                    return record;
+                </resource>
+                <resource>
+                    メッセージ送信.csv
+                </resource>
+                <resource>
+                    Subject1,hoge
+                </resource>
+            </resources>
+        </action>
+        <action id="HTTPリクエスト評価" type="after" serviceName="Nimbus#TextCompareEvaluateAction">
+            <title>HTTPリクエストを評価します。</title>
+            <description>WebServerにHTTPリクエストした内容をエビデンスと比較評価します。</description>
+            <resources>
+                <resource>
+                    WebServer/action1.txt.h.req
+                    WebServer/action1.txt.h.req.evi
+                </resource>
+            </resources>
+        </action>
+        <action id="HTTPレスポンスヘッダ評価" type="after" serviceName="Nimbus#TextCompareEvaluateAction">
+            <title>HTTPレスポンスヘッダを評価します。</title>
+            <description>WebServerから返ってきたHTTレスポンスのヘッダをエビデンスと比較評価します。</description>
+            <resources>
+                <resource>
+                    HTTP送信.h.rsp
+                    HTTP送信.h.rsp.evi
+                </resource>
+            </resources>
+        </action>
+        <action id="HTTPレスポンスボディ評価" type="after" serviceName="Nimbus#TextCompareEvaluateAction">
+            <title>HTTPレスポンスボディを評価します。</title>
+            <description>WebServerから返ってきたHTTレスポンスのボディをエビデンスと比較評価します。</description>
+            <resources>
+                <resource>
+                    HTTP送信.b.rsp
+                    HTTP送信.b.rsp.evi
+                    "property4":"[0-9\/ :]+"
+                </resource>
+            </resources>
+        </action>
+        <action id="JMX呼び出し" type="after" serviceName="Nimbus#MBeanCallOutputChainAction">
+            <title>JMXでメモリ使用量を取得します。</title>
+            <description>JMXでJavaVMのメモリ使用量を取得してファイルに出力します。</description>
+            <resources>
+                <resource>
+                    objectName
+                    java.lang:type=Memory
+                    getHeapMemoryUsage()
+                </resource>
+                <resource>
+                    (used)
+                </resource>
+                <resource>
+                    
+                    メモリ使用量.txt
+                </resource>
+            </resources>
+        </action>
+        <action id="メッセージ受信" type="after" serviceName="Nimbus#RecordMessageReceiverReceiveChainAction">
+            <title>メッセージを受信して評価します。</title>
+            <description>メッセージを受信して、受信内容をエビデンスを比較評価します。</description>
+            <resources>
+                <resource>
+                    メッセージ受信登録
+                    object
+                    1000
+                </resource>
+                <resource/>
+                <resource>
+                    メッセージ受信_2.obj
+                    メッセージ受信_2.obj.evi
+                    time
+                </resource>
+            </resources>
+        </action>
+    </testcase>
+</scenario>

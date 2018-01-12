@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- 遺伝的アルゴリズムサービス-->
+        <service name="GeneticAlgorithm"
+                 code="jp.ossc.nimbus.service.ga.SimpleGeneticAlgorithmService">
+            
+            <!-- 交叉対象となる個体の選択方式 -->
+            <attribute name="SeedMatchMakerServiceName">#SeedMatchMaker</attribute>
+            
+            <!-- 収束条件 -->
+            <attribute name="ConvergenceConditionServiceName">#ConvergenceCondition</attribute>
+            
+            <!-- 並列処理スレッド数 -->
+            <attribute name="ParallelThreadNum">4</attribute>
+            
+            <depends>SeedMatchMaker</depends>
+            <depends>ConvergenceCondition</depends>
+            
+        </service> 
+        
+        <!-- 交叉対象となる個体の選択方式 -->
+        <service name="SeedMatchMaker"
+                 code="jp.ossc.nimbus.service.ga.DefaultSeedMatchMakerService">
+            
+            <!-- エリート率 -->
+            <!-- 上位5%のSeedは、そのまま次の世代に引き継がれる。-->
+            <attribute name="EliteRate">0.05</attribute>
+            
+            <!-- 落ちこぼれ率 -->
+            <!-- 下位30%のSeedは、次世代の交叉に使われず、破棄される。-->
+            <attribute name="DropRate">0.3</attribute>
+            
+            <!-- 新規率 -->
+            <!-- 下位1%のSeedは、次世代に乱数発生した新規Seedが現れる。-->
+            <attribute name="NewRate">0.01</attribute>
+            
+            <!-- 選択方式 -->
+            <!-- ルーレット方式 -->
+            <!-- 次世代の交叉対象として選ばれるシードは、より適応値の高いものが選ばれやすくなる -->
+            <attribute name="MatchMakeMethod"><static-field-ref code="jp.ossc.nimbus.service.ga.DefaultSeedMatchMakerService" name="MATCH_MAKE_METHOD_ROULETTE"/></attribute>
+            
+        </service>
+        
+        <!-- 収束条件 -->
+        <service name="ConvergenceCondition"
+                 code="jp.ossc.nimbus.service.ga.DefaultConvergenceConditionService">
+            
+            <!-- 最大世代数 -->
+            <!-- 収束しない場合は、100世代で終了する-->
+            <attribute name="MaxGenerationNum">100</attribute>
+            
+            <!-- 比較対象世代 -->
+            <!-- 5世代前の世代との比較で収束を判断する。-->
+            <attribute name="PreIndex">5</attribute>
+            
+            <!-- 相対許容誤差 -->
+            <!-- 適応値が比較対象世代の適応値と1%以下の誤差なら収束したとみなして終了する -->
+            <attribute name="PermissibleRelativeError">0.01</attribute>
+            
+        </service>
+        
+    </manager>
+    
+</server>

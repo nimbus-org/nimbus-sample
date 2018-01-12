@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- アスペクト対象と、アスペクトで挟み込むインタセプタを定義するAspectTranslatorサービス -->
+        <service name="SampleAspect"
+                 code="jp.ossc.nimbus.service.aop.javassist.MethodInterceptorAspectService">
+            <attribute name="TargetClassName">sample\.service\.POJOService</attribute>
+            <attribute name="TargetMethodName">call.*</attribute>
+            <attribute name="InterceptorChainListServiceName">#SampleInterceptorChainList</attribute>
+        </service>
+        
+        <!-- アスペクトで挟み込むInterceptorChainListサービス -->
+        <service name="SampleInterceptorChainList"
+                 code="jp.ossc.nimbus.service.aop.DefaultInterceptorChainListService">
+            <attribute name="InterceptorServiceNames">
+                #RetryInterceptor
+            </attribute>
+            
+            <depends>
+                
+                <!-- リトライするInterceptorサービス -->
+                <service name="RetryInterceptor"
+                         code="jp.ossc.nimbus.service.aop.interceptor.RetryInterceptorService">
+                    
+                    <!-- リトライ回数を設定する -->
+                    <attribute name="MaxRetryCount">1</attribute>
+                    
+                    <!-- リトライ間隔を設定する -->
+                    <attribute name="RetryInterval">1000</attribute>
+                    
+                    <!-- リトライ条件となる例外を設定する -->
+                    <!-- java.lang.Exceptionが発生して、java.lang.Exception#getMessage()が"Retry"だった時にリトライするとうに設定する -->
+                    <attribute name="ExceptionConditions">
+                        java.lang.Exception:@Message@=="Retry"
+                    </attribute>
+                </service>
+                
+            </depends>
+            
+        </service>
+        
+    </manager>
+    
+</server>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<!-- ルート要素 -->
+<server>
+    
+    <!-- サービスをグルーピングする
+      この要素は、複数指定する事ができる。
+      name属性で、グルーピングするマネージャ名を指定する。
+      name属性は、省略可能で省略した場合は、マネージャ名はNimbusとなり、
+      マネージャ名を省略してサービスを取得する事ができる。
+      name属性の値が同じmanager要素は、同じグループに属する。
+    -->
+    <manager>
+        
+        <!-- POJOサービスを登録する
+          この要素は、複数指定する事ができるが、同じマネージャ内で一意となる名前を
+          name属性に指定しなければならない。
+          name属性でサービスの名前を指定する。
+          code属性でサービスのクラス名を完全修飾名で指定する。
+        -->
+        <service name="Service1"
+                 code="sample.service.POJOService"/>
+        
+    </manager>
+    
+    <manager name="Group1">
+        
+        <!-- マネージャが異なれば、サービス名は重複しても良い -->
+        <service name="Service1"
+                 code="sample.service.POJOService">
+            
+            <!-- サービスの依存関係を設定する
+              このサービスの開始前に、開始していなければならないサービスを指定する。
+              異なるマネージャにグルーピングされたサービスに依存する場合は、
+              manager-name属性で、そのマネージャ名を指定しなければならない。
+              但し、もう１つ記述法があり、この要素の内容にマネージャ名#サービス名
+              の形式で指定する事もできる。
+              その記述法で指定する場合、同じマネージャのサービスは、#サービス名
+              のようにマネージャ名を省略する事ができる。
+            -->
+            <depends>Service2</depends>
+            
+        </service>
+        
+        <!-- 同一マネージャ内では、サービス名は一意にしなければならない -->
+        <service name="Service2"
+                 code="sample.service.POJOService"/>
+        
+    </manager>
+    
+</server>

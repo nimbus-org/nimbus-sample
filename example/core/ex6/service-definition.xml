@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <!-- Nimbus全体に適用されるプロパティを定義する
+      全てのmanager要素下で参照可能。
+      但し、別のサービス定義ファイルから参照する場合は、server-propertyが
+      定義されたサービス定義ファイルが先にロードされていなければならない。
+    -->
+    <server-property name="Message">サーバプロパティです。</server-property>
+    
+    <manager name="Manager1">
+        
+        <service name="Service1"
+                 code="sample.service.POJOService">
+            
+            <!-- JavaVMのシステムプロパティを参照して属性に設定する -->
+            <attribute name="Message">Java Vendor : ${java.vendor}</attribute>
+        </service>
+        
+        <service name="Service2"
+                 code="sample.service.POJOService">
+            
+            <!-- Nimbusのserver-propertyを参照して属性に設定する -->
+            <attribute name="Message">${Message}</attribute>
+        </service>
+        
+    </manager>
+    
+    <manager name="Manager2">
+        
+        <!-- 親要素のmanager要素下のみに適用されるプロパティを定義する
+          同じname属性の値を持つmanager要素下で参照可能。
+          但し、別のサービス定義ファイルから参照する場合や、同じサービス定義
+          ファイル内で同じname属性の値を持つmanager要素を複数定義する場合は、
+          manager-propertyが定義されたmanagerが先にロードされていなければ
+          ならない。
+        -->
+        <manager-property name="Message">マネージャプロパティです。</manager-property>
+        
+        <service name="Service1"
+                 code="sample.service.POJOService">
+            
+            <!-- Nimbusのmanager-propertyを参照して属性に設定する
+              プロパティ名が重複する場合は、以下の優先順位で適用される。
+                1. JVMのシステムプロパティ
+                2. ServiceLoderConfig
+                3. manager-property
+                4. server-property
+            -->
+            <attribute name="Message">${Message}</attribute>
+        </service>
+        
+        <service name="Service2"
+                 code="sample.service.POJOService">
+            
+            <!-- ロード時に指定したServiceLoderConfigのプロパティを参照して属性に設定する -->
+            <attribute name="Message">${loder.Message}</attribute>
+        </service>
+        
+    </manager>
+    
+</server>

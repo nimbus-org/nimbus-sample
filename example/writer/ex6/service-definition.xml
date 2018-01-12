@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- コンソールとファイルのをCategoryまとめるCategoryサービス -->
+        <service name="Category"
+                 code="jp.ossc.nimbus.service.writer.GroupCategoryService">
+            <attribute name="CategoryServiceNames">
+                #ConsoleCategory
+                #ErrorFileCategory
+            </attribute>
+            <depends>ConsoleCategory</depends>
+            <depends>ErrorFileCategory</depends>
+        </service>
+        
+        <!-- コンソールへのフォーマットと出力先をまとめるCategoryサービス -->
+        <service name="ConsoleCategory"
+                 code="jp.ossc.nimbus.service.writer.SimpleCategoryService">
+            <attribute name="WritableRecordFactoryServiceName">#WritableRecordFactory</attribute>
+            <attribute name="MessageWriterServiceName">#ConsoleWriter</attribute>
+            <depends>
+                <!-- 出力情報をフォーマットするWritableRecordFactoryサービス
+                  MapからフォーマットしてMessageWriterの入力であるWritableRecordを生成する
+                -->
+                <service name="WritableRecordFactory"
+                         code="jp.ossc.nimbus.service.writer.WritableRecordFactoryService">
+                    <attribute name="Format">%DATE% : %MESSAGE%</attribute>
+                    <attribute name="ImplementClasses">
+                        DATE=jp.ossc.nimbus.service.writer.DateElement
+                    </attribute>
+                </service>
+            </depends>
+            <depends>
+                <!-- コンソールに出力するMessageWriterサービス -->
+                <service name="ConsoleWriter"
+                         code="jp.ossc.nimbus.service.writer.ConsoleWriterService"/>
+            </depends>
+        </service>
+        
+        <!-- ファイルへのフォーマットと出力先をまとめるCategoryサービス -->
+        <service name="ErrorFileCategory"
+                 code="jp.ossc.nimbus.service.writer.EvaluateCategoryService">
+            
+            <!-- 出力する条件を設定する
+              出力情報のキーは@で囲む。
+              式言語としてJexlを採用してます。
+              Jexlの詳細は、http://jakarta.apache.org/commons/jexl
+            -->
+            <attribute name="WritableConditions">
+                @EXCEPTION@ != null
+            </attribute>
+            
+            <attribute name="WritableRecordFactoryServiceName">#ErrorWritableRecordFactory</attribute>
+            <attribute name="MessageWriterServiceName">#FileWriter</attribute>
+            <depends>
+                <!-- 出力情報をフォーマットするWritableRecordFactoryサービス
+                  MapからフォーマットしてMessageWriterの入力であるWritableRecordを生成する
+                -->
+                <service name="ErrorWritableRecordFactory"
+                         code="jp.ossc.nimbus.service.writer.WritableRecordFactoryService">
+                    <attribute name="Format">%DATE% : %MESSAGE%${line.separator}%EXCEPTION%</attribute>
+                    <attribute name="ImplementClasses">
+                        DATE=jp.ossc.nimbus.service.writer.DateElement
+                        EXCEPTION=jp.ossc.nimbus.service.writer.ThrowableSimpleElement
+                    </attribute>
+                </service>
+            </depends>
+            <depends>
+                <!-- Log4Jを使ってファイルに出力するMessageWriterサービス -->
+                <service name="FileWriter"
+                         code="jp.ossc.nimbus.service.writer.log4j.FileAppenderWriterService">
+                    <attribute name="Append">false</attribute>
+                    <attribute name="BufferedIO">true</attribute>
+                    <attribute name="BufferSize">1024</attribute>
+                    <attribute name="File">error.txt</attribute>
+                </service>
+            </depends>
+        </service>
+        
+    </manager>
+    
+</server>

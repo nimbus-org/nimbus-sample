@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- アスペクト対象と、アスペクトで挟み込むインタセプタを定義するAspectTranslatorサービス -->
+        <service name="SampleAspect"
+                 code="jp.ossc.nimbus.service.aop.javassist.MethodInterceptorAspectService">
+            <attribute name="TargetClassName">sample\.service\..*</attribute>
+            <attribute name="InterceptorChainListServiceName">#SampleInterceptorChainList</attribute>
+        </service>
+        
+        <!-- アスペクトで挟み込むInterceptorChainListサービス -->
+        <service name="SampleInterceptorChainList"
+                 code="jp.ossc.nimbus.service.aop.DefaultInterceptorChainListService">
+            <attribute name="InterceptorServiceNames">
+                #MethodSynchronizeInterceptor
+            </attribute>
+            
+            <depends>
+                
+                <!-- 同期制御を行うInterceptorサービス -->
+                <service name="MethodSynchronizeInterceptor"
+                         code="jp.ossc.nimbus.service.aop.interceptor.MethodSynchronizeInterceptorService">
+                    
+                    <!-- 同期制御のスコープを設定する。
+                      インスタンスレベルで同期する。
+                      別スレッドで同一インスタンスの別メソッドへの
+                      呼び出しに対してまで、同期させる。
+                    -->
+                    <attribute name="Scope">INSTANCE</attribute>
+                    
+                </service>
+                
+            </depends>
+            
+        </service>
+        
+    </manager>
+    
+</server>

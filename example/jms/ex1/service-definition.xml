@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- QueueConnectionを取得するConnectionFactoryサービス -->
+        <service name="ConnectionFactory"
+                 code="jp.ossc.nimbus.service.jms.JMSQueueConnectionFactoryService">
+            
+            <!-- javax.jms.ConnectionFactoryをlookupするJndiFinderサービスのサービス名を設定する -->
+            <attribute name="JndiFinderServiceName">#JndiFinder</attribute>
+            
+            <!-- javax.jms.ConnectionFactoryのJNDI名を設定する -->
+            <attribute name="ConnectionFactoryName">XAConnectionFactory</attribute>
+            
+            <depends>
+                <!-- JNDIからlookupするJndiFinderサービス -->
+                <service name="JndiFinder"
+                         code="jp.ossc.nimbus.service.jndi.CachedJndiFinderService">
+                    <attribute name="Environment">
+                        java.naming.factory.initial=org.jnp.interfaces.NamingContextFactory
+                        java.naming.factory.url.pkgs=org.jboss.naming:org.jnp.interfaces
+                        java.naming.provider.url=localhost:1099
+                    </attribute>
+                </service>
+            </depends>
+            
+        </service>
+        
+    </manager>
+    
+</server>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- Beanを変換するConverterサービス -->
+        <service name="BeanFlowConverter1"
+                 code="jp.ossc.nimbus.service.converter.BeanFlowConverterService">
+            
+            <!-- BeanFlowInvokerFactoryサービスを設定する -->
+            <attribute name="BeanFlowInvokerFactoryServiceName">#BeanFlowInvokerFactory</attribute>
+            
+            <!-- デフォルトで実行するBeanFlowを設定する -->
+            <attribute name="DefaultBeanFlowKey">Convert1</attribute>
+            
+            <depends>BeanFlowInvokerFactory</depends>
+        </service>
+        
+        <!-- Beanを変換するConverterサービス -->
+        <service name="BeanFlowConverter2"
+                 code="jp.ossc.nimbus.service.converter.BeanFlowConverterService">
+            
+            <!-- BeanFlowInvokerFactoryサービスを設定する -->
+            <attribute name="BeanFlowInvokerFactoryServiceName">#BeanFlowInvokerFactory</attribute>
+            
+            <!-- 入力のクラスに対して実行するBeanFlowを設定する -->
+            <attribute name="ClassMapping">
+                sample.Bean1=Convert2
+                sample.Bean2=Convert3
+            </attribute>
+            
+            <depends>BeanFlowInvokerFactory</depends>
+        </service>
+        
+        <!-- Beanを変換するConverterサービス -->
+        <service name="BeanFlowConverter3"
+                 code="jp.ossc.nimbus.service.converter.BeanFlowConverterService">
+            
+            <!-- BeanFlowInvokerFactoryサービスを設定する -->
+            <attribute name="BeanFlowInvokerFactoryServiceName">#BeanFlowInvokerFactory</attribute>
+            
+            <!-- 入力のBeanの条件に対して実行するBeanFlowを設定する -->
+            <attribute name="Conditions">
+                @A@ > 0=Convert1
+            </attribute>
+            
+            <!-- デフォルトで実行するBeanFlowを設定する -->
+            <attribute name="DefaultBeanFlowKey">Convert2</attribute>
+            
+            <depends>BeanFlowInvokerFactory</depends>
+        </service>
+                
+        <!-- BeanFlowInvokerFactoryサービス -->
+        <service name="BeanFlowInvokerFactory"
+                 code="jp.ossc.nimbus.service.beancontrol.DefaultBeanFlowInvokerFactoryService">
+            <attribute name="DirPaths">flows</attribute>
+            <attribute name="BeanFlowInvokerAccessClass">jp.ossc.nimbus.service.beancontrol.BeanFlowInvokerAccessImpl2</attribute>
+            <attribute name="Validate">true</attribute>
+        </service>
+        
+    </manager>
+    
+</server>

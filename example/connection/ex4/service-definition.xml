@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- JDBCドライバ経由でConnectionを取得するConnectionFactoryサービス -->
+        <service name="ConnectionFactory"
+                 code="jp.ossc.nimbus.service.connection.JDBCConnectionFactoryService">
+            <attribute name="DriverName">org.hsqldb.jdbcDriver</attribute>
+            <attribute name="ConnectionURL">jdbc:hsqldb:./localDB</attribute>
+            <attribute name="UserName">sa</attribute>
+            <attribute name="Password"></attribute>
+        </service>
+        
+        <!-- テーブルの準備をするTableCreatorサービス -->
+        <service name="TableCreator"
+                 code="jp.ossc.nimbus.service.connection.TableCreatorService">
+            
+            <!-- JDBCコネクションを取得するConnectionFactoryサービス -->
+            <attribute name="ConnectionFactoryServiceName">#ConnectionFactory</attribute>
+            
+            <!-- テーブルの存在確認をするSQL -->
+            <attribute name="ExistsTableQuery">select count(1) from SYSTEM_TABLES where TABLE_NAME='MYUSER'</attribute>
+            
+            <!-- テーブルを生成するSQL -->
+            <attribute name="CreateTableQuery">create table MYUSER(name varchar(100), age integer, sex char(1))</attribute>
+            
+            <!-- テーブルを削除するSQL -->
+            <attribute name="DropTableQuery">drop table MYUSER</attribute>
+            
+            <!-- テーブルにレコードを挿入するSQL -->
+            <attribute name="InsertQuery">insert into MYUSER(name, age, sex) values(?, ?, ?)</attribute>
+            
+            <!-- サービスの開始時にテーブルを削除するように設定 -->
+            <attribute name="DropTableOnStart">true</attribute>
+            
+            <!-- サービスの開始時にテーブルを作成するように設定 -->
+            <attribute name="CreateTableOnStart">true</attribute>
+            
+            <!-- サービスの開始時にテーブルにレコードを挿入するように設定 -->
+            <attribute name="InsertOnStart">true</attribute>
+            
+            <!-- サービスの停止時にテーブルを削除するように設定 -->
+            <attribute name="DropTableOnStop">true</attribute>
+            
+            <!-- レコード文字列を読み込むRecordListのスキーマを定義 -->
+            <attribute name="RecordListSchema">
+                :name,java.lang.String
+                :age,int
+                :sex,java.lang.String
+            </attribute>
+            
+            <!-- テーブルに挿入するレコード -->
+            <attribute name="InsertRecords">
+                hoge,20,0
+                fuga,25,1
+            </attribute>
+            
+            <depends>ConnectionFactory</depends>
+            
+        </service>
+        
+    </manager>
+    
+</server>

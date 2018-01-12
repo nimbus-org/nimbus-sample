@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE dataSets PUBLIC
+  "-//Nimbus//DTD Nimbus DataSet generation 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/dataset_1_0.dtd">
+
+<dataSets>
+    
+    <record code="${PACKAGE}.SampleRecord"
+            extends="jp.ossc.nimbus.service.context.SharedContextRecord">
+        <schema>
+            :prop1,java.lang.String
+            :prop2,int
+        </schema>
+    </record>
+    
+    <recordList code="${PACKAGE}.SampleRecordList"
+                recordCode="${PACKAGE}.SampleRecord"
+                name="Sample">
+        <index name="Key1">prop1,prop2</index>
+    </recordList>
+    
+</dataSets>
