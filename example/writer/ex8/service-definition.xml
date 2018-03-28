@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+<ifdef name="Mode" value="Client">
+        
+        <!-- サーバに送信するMessageWriterサービス -->
+        <service name="Writer"
+                 code="jp.ossc.nimbus.service.writer.publish.ServerConnectionWriterService">
+            
+            <!-- サーバコネクションを取得するサーバコネクションファクトリサービスを設定する -->
+            <attribute name="ServerConnectionFactoryServiceName">#ConnectionFactory</attribute>
+            
+            <!-- 送信するメッセージのサブジェクトを設定する -->
+            <attribute name="Subject">Test</attribute>
+            
+            <!-- 送信するメッセージのキーをWritableRecordから取得する際のキー設定する -->
+            <attribute name="KeyKey">Client</attribute>
+            
+            <depends>ClusterConnectionFactory</depends>
+        </service>
+        
+        <!-- TCPコネクションファクトリサービス -->
+        <service name="ConnectionFactory"
+                 code="jp.ossc.nimbus.service.publish.tcp.ConnectionFactoryService"/>
+        
+        <!-- クラスタコネクションファクトリサービス -->
+        <service name="ClusterConnectionFactory"
+                 code="jp.ossc.nimbus.service.publish.ClusterConnectionFactoryService">
+            
+            <!-- クラスタを組むクライアントコネクションファクトリサービスを設定する -->
+            <attribute name="ClientConnectionFactoryServiceName">#ConnectionFactory</attribute>
+            
+            <!-- クラスタサービスを設定する -->
+            <attribute name="ClusterServiceName">#Cluster</attribute>
+            
+            <!-- 全ての送信者と接続するように設定する -->
+            <attribute name="Multiple">true</attribute>
+            
+            <depends>ConnectionFactory</depends>
+            <depends>Cluster</depends>
+        </service>
+</ifdef>
+        
+<ifdef name="Mode" value="Server">
+        
+        <!-- クライアントから受信してMessageWriterに出力するサービス -->
+        <service name="ClientConnectionWriter"
+                 code="jp.ossc.nimbus.service.writer.publish.ClientConnectionWriterService">
+            
+            <!-- クライアントコネクションを取得するクライアントコネクションファクトリサービスを設定する -->
+            <attribute name="ClientConnectionFactoryServiceName">#ClusterClientConnectionFactory</attribute>
+            
+            <!-- 出力するMessageWriterサービスを設定する -->
+            <attribute name="MessageWriterServiceName">#Writer</attribute>
+            
+            <!-- 受信するメッセージのサブジェクトとキーを設定する -->
+            <attribute name="Subject(Test)" nullValue="true"/>
+            
+            <depends>ClusterClientConnectionFactory</depends>
+            <depends>Writer</depends>
+        </service>
+        
+        <!-- クラスタクライアントコネクションファクトリサービス -->
+        <service name="ClusterClientConnectionFactory"
+                 code="jp.ossc.nimbus.service.publish.ClusterClientConnectionFactoryService">
+            
+            <!-- クラスタサービスを設定する -->
+            <attribute name="ClusterServiceName">#Cluster</attribute>
+            
+            <attribute name="FlexibleConnect">true</attribute>
+            <depends>Cluster</depends>
+        </service>
+        
+        <service name="Writer"
+                 code="jp.ossc.nimbus.service.writer.ConsoleWriterService"/>
+        
+</ifdef>
+        
+        <!-- クラスタサービス -->
+        <service name="Cluster"
+                 code="jp.ossc.nimbus.service.keepalive.ClusterService">
+            
+            <!-- バインドアドレスを設定する -->
+            <attribute name="BindAddress">0.0.0.0</attribute>
+            
+            <!-- マルチキャストアドレスを設定する -->
+            <attribute name="MulticastGroupAddress">224.1.1.1</attribute>
+            
+<ifdef name="Mode" value="Server">
+            <!-- クラスタにクライアントとして参加するように設定する -->
+            <attribute name="Client">true</attribute>
+</ifdef>
+            
+            <!-- ハートビートのリトライ回数に設定する -->
+            <attribute name="HeartBeatRetryCount">2</attribute>
+            
+            <!-- ユニキャストポートを匿名ポートに設定する -->
+            <attribute name="AnonymousUnicastPort">true</attribute>
+            
+<ifdef name="Mode" value="Client">
+            <!-- サービスの開始時にクラスタに参加しないように設定する -->
+            <attribute name="JoinOnStart">false</attribute>
+</ifdef>
+        </service>
+        
+    </manager>
+    
+</server>
