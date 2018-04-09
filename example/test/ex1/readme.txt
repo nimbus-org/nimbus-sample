@@ -16,14 +16,17 @@
   ・commons-langのJar
   ・commons-collectionsのJar
   ・velocityのJar
+  ・snappyのJar
+  ・lz4のJar
   ・bshのJar
-
+  ・mpxjのJar
+  
 ○実行
    
   （１）TestRunnerを実行する。（JDK1.5以上を使用）
       例：
-        java -classpath nimbus.jar;commons-httpclient.jar;commons-codec.jar;commons-logging.jar;commons-lang.jar;commons-collections.jar;velocity.jar -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=1234 -Dcom.sun.management.jmxremote.ssl=false jp.ossc.nimbus.service.test.TestRunner runner.xml service-definition.xml
+        java -classpath nimbus.jar;commons-httpclient.jar;commons-codec.jar;commons-logging.jar;commons-lang.jar;commons-collections.jar;velocity.jar;snappy.jar;lz4.jar;bsh.jar;mpxj.jar -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=1234 -Dcom.sun.management.jmxremote.ssl=false jp.ossc.nimbus.service.test.TestRunner runner.xml service-definition.xml
 
   （２）TestSwingRunnerを実行する。（JDK1.6以上を使用）
       例：
-        java -classpath nimbus.jar;commons-httpclient.jar;commons-codec.jar;commons-logging.jar;commons-lang.jar;commons-collections.jar;velocity.jar -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=1234 -Dcom.sun.management.jmxremote.ssl=false jp.ossc.nimbus.service.test.TestRunner service-definition.xml
+        java -classpath nimbus.jar;commons-httpclient.jar;commons-codec.jar;commons-logging.jar;commons-lang.jar;commons-collections.jar;velocity.jar;snappy.jar;lz4.jar;bsh.jar;mpxj.jar -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=1234 -Dcom.sun.management.jmxremote.ssl=false jp.ossc.nimbus.service.test.swing.TestSwingRunner service-definition.xml

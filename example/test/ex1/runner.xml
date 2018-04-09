@@ -3,13 +3,21 @@
   "-//Nimbus//DTD Nimbus Test Runner 1.0//JA"
   "http://nimbus.sourceforge.jp/dtd/testrunner_1_0.dtd">
 
-<testRunner>
+<testRunner test="true">
     
     <include>
         <scenarioGroup id="Group1"/>
     </include>
     
-    <reporter>TestReporter</reporter>
+    <reporter>ConsoleTestReporter</reporter>
     <reporter>CSVTestReporter</reporter>
+    <reporter>HtmlTestReporter</reporter>
+<!--
+    <reporter>ConsoleTestEstimateReporter</reporter>
+    <reporter>CSVTestEstimateReporter</reporter>
+    
+    <reporter>HtmlTestCaseProgressReporter</reporter>
+    <reporter>MSProjectTestReporter</reporter>
+-->
     
 </testRunner>

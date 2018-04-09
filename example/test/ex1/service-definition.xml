@@ -43,15 +43,47 @@
             
         </service>
         
-        <!-- TestReporterサービス -->
-        <service name="TestReporter"
+        <!-- テスト見積もり 標準出力 TestReporterサービス -->
+        <service name="ConsoleTestEstimateReporter"
+                 code="jp.ossc.nimbus.service.test.report.ConsoleTestEstimateReporterService"/>
+        
+        <!-- テスト見積もり CSVファイル出力 TestReporterサービス -->
+        <service name="CSVTestEstimateReporter"
+                 code="jp.ossc.nimbus.service.test.report.CSVTestEstimateReporterService">
+            
+            <attribute name="OutputFile">./estimate.csv</attribute>
+        </service>
+        
+        <!-- テスト進捗 HTMLファイル出力 TestReporterサービス -->
+        <service name="HtmlTestCaseProgressReporter"
+                 code="jp.ossc.nimbus.service.test.report.HtmlTestCaseProgressReporterService">
+            
+            <attribute name="OutputPath">./html/progress</attribute>
+        </service>
+        
+        <!-- テスト進捗 MSプロジェクトファイル出力 TestReporterサービス -->
+        <service name="MSProjectTestReporter"
+                 code="jp.ossc.nimbus.service.test.report.MSProjectTestReporterService">
+            
+            <attribute name="OutputFile">progress.xml</attribute>
+        </service>
+        
+        <!-- テスト結果 標準出力 TestReporterサービス -->
+        <service name="ConsoleTestReporter"
                  code="jp.ossc.nimbus.service.test.report.ConsoleTestReporterService"/>
         
-        <!-- TestReporterサービス -->
+        <!-- テスト結果 CSVファイル出力 TestReporterサービス -->
         <service name="CSVTestReporter"
                  code="jp.ossc.nimbus.service.test.report.CSVTestReporterService">
             
             <attribute name="OutputFile">./report.csv</attribute>
+        </service>
+        
+        <!-- テスト結果 HTMLファイル出力 TestReporterサービス -->
+        <service name="HtmlTestReporter"
+                 code="jp.ossc.nimbus.service.test.report.HtmlTestReporterService">
+            
+            <attribute name="OutputPath">./html/report</attribute>
         </service>
         
         <!-- TestResourceManagerサービス -->
