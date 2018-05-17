@@ -237,6 +237,10 @@ Nimbus サンプル集
 │  │  ├サンプル７：アクセスジャーナルを取得してみよう。
 │  │  └サンプル８：Webアプリケーションを業務フローで作ってみよう。
 │  │
+│  ├ websocket：Websocket
+│  │  │
+│  │  └サンプル１：TomcatでWebsocketを動かしてみよう。
+│  │
 │  ├ transaction：JTA
 │  │
 │  └ jmx：JMX
