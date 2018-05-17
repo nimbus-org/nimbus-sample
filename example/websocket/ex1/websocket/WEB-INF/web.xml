@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+    xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+    id="WebApp_ID" version="3.1">
+
+    <display-name>nimbus_websocket</display-name>
+    
+    <!-- Websocket認証用Servlet -->
+    <servlet>
+        <servlet-name>WebSocketAuthServlet</servlet-name>
+        <servlet-class>jp.ossc.nimbus.servlet.WebSocketAuthServlet</servlet-class>
+        <!-- 認証サービスの設定 -->
+        <init-param>
+            <param-name>AuthenticatorServiceName</param-name>
+            <param-value>Nimbus#Authenticator</param-value>
+        </init-param>
+        <!-- Configuratorサービスの設定 -->
+        <init-param>
+            <param-name>ConfiguratorServiceName</param-name>
+            <param-value>Nimbus#Configurator</param-value>
+        </init-param>
+        <!-- Acceptに対するConverterのマッピングを設定する -->
+        <init-param>
+            <param-name>ConverterMapDefinition</param-name>
+            <param-value>
+                application/json=Nimbus#BeanJSONConverter
+            </param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    
+    <servlet-mapping>
+        <servlet-name>WebSocketAuthServlet</servlet-name>
+        <url-pattern>/wsauth</url-pattern>
+    </servlet-mapping>
+    
+    <!-- InterceptorChainCallFilter -->
+    <filter>
+        <filter-name>InterceptorChainCallFilter</filter-name>
+        <filter-class>jp.ossc.nimbus.servlet.InterceptorChainCallFilter</filter-class>
+        <init-param>
+            <param-name>InterceptorChainListServiceName</param-name>
+            <param-value>Nimbus#FilterInterceptorChainList</param-value>
+        </init-param>
+        <init-param>
+            <param-name>UseThreadLocalInterceptorChain</param-name>
+            <param-value>false</param-value>
+        </init-param>
+    </filter>
+    
+    <filter-mapping>
+        <filter-name>InterceptorChainCallFilter</filter-name>
+        <url-pattern>/ws</url-pattern>
+    </filter-mapping>
+    
+</web-app>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://www.nimbus.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager shutdown-hook="true">
+        
+        <!-- FilterInterceptorChainListサービス -->
+        <service name="FilterInterceptorChainList"
+                 code="jp.ossc.nimbus.service.aop.DefaultInterceptorChainListService">
+            <attribute name="InterceptorServiceNames">
+                #ThreadContextInitializeInterceptor
+            </attribute>
+            <depends>
+                <!-- ThreadContext初期化Interceptorサービス -->
+                <service name="ThreadContextInitializeInterceptor"
+                         code="jp.ossc.nimbus.service.aop.interceptor.servlet.ThreadContextInitializeInterceptorService">
+                    <attribute name="ThreadContextServiceName">#ThreadContext</attribute>
+                    <depends>ThreadContext</depends>
+                </service>
+            </depends>
+        </service>
+        
+        <!-- Configuratorサービス -->
+        <service name="Configurator"
+                 code="jp.ossc.nimbus.service.websocket.DefaultConfiguratorService">
+            <attribute name="Path">/ws</attribute>
+            <attribute name="EndpointServiceName">#Endpoint</attribute>
+            <attribute name="ThreadContextServiceName">#ThreadContext</attribute>
+            <depends>
+                <!-- Endpointサービス -->
+                <service name="Endpoint"
+                         code="jp.ossc.nimbus.service.websocket.DefaultEndpointService">
+                    <attribute name="AuthenticatorServiceName">#Authenticator</attribute>
+                    <attribute name="MessageHandlerServiceNames">
+                        #SampleMessageHandler
+                    </attribute>
+                    <depends>
+                        <!-- 簡易認証サービス -->
+                        <service name="Authenticator"
+                                 code="jp.ossc.nimbus.service.websocket.SimpleTicketAuthenticatorService">
+                            <attribute name="TicketMapping(user01)">ticket01</attribute>
+                            <attribute name="TicketMapping(user02)">ticket02</attribute>
+                        </service>
+                    </depends>
+                    <depends>
+                        <!-- SampleMessageHandler -->
+                        <service name="SampleMessageHandler"
+                                 code="jp.ossc.nimbus.service.websocket.SampleMessageHandlerFactoryService"/>
+                    </depends>
+                </service>
+            </depends>
+            <depends>ThreadContext</depends>
+        </service>
+        
+        <!-- スレッド単位のコンテキスト情報を提供するコンテキストサービス -->
+        <service name="ThreadContext"
+                 code="jp.ossc.nimbus.service.context.ThreadContextService"/>
+        
+        <!-- BeanJSONConverter -->
+        <service name="BeanJSONConverter"
+                 code="jp.ossc.nimbus.util.converter.BeanJSONConverter">
+            <attribute name="IgnoreUnknownProperty">true</attribute>
+        </service>
+        
+    </manager>
+</server>
