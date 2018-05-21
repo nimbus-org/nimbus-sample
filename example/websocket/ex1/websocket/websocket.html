@@ -6,6 +6,7 @@
     <script type="text/javascript">
         // WebSocket
         var webSocket = null;
+        var userArray = [{val:'ALL',txt:'ALL'}];
 
         function auth() {
             var id = document.getElementById("id").value;
@@ -62,19 +63,48 @@
         function send() {
             if (webSocket != null) {
                 var message = document.getElementById("message").value;
-                webSocket.send((new TextEncoder).encode(message));
+                var targetUserId = document.getElementById("targetUser").value;
+                webSocket.send((new TextEncoder).encode(targetUserId + "@" + message));
             }
         }
 
         function addRecieveMessage(data){
+            var index = data.indexOf('{"allsessions":');
+            if (index != -1) {
+                var allsessions = data.slice(index);
+                var json = JSON.parse(allsessions);
+                setupTargetUser(json);
+            }
             var receiveMessage = document.getElementById("receiveMessage");
             var val = receiveMessage.value;
             if(val != ""){
                 val = val + "\r\n";
             }
-            val = val + data
+            if (index == -1) {
+                val = val + data;
+            } else {
+                val = val + data.substring(0,index);
+            }
             receiveMessage.value = val;
         }
+        
+        function setupTargetUser(json){
+            var targetUser = document.getElementById("targetUser");
+            while (targetUser.childNodes.length > 0) {
+                targetUser.removeChild(targetUser.firstChild)
+            }
+            var op = document.createElement("option");
+            op.value = 'ALL';
+            op.text = 'ALL';
+            targetUser.appendChild(op);
+            for(var i = 0; i < json.allsessions.length; i++) {
+                op = document.createElement("option");
+                op.value = json.allsessions[i].sessionId;
+                op.text = json.allsessions[i].userId;
+                targetUser.appendChild(op);
+            }
+        }
+        
     </script>
 </head>
 <body>
@@ -83,6 +113,9 @@
     <input type="button" value="認証" onclick="auth()"/>
     <input type="button" value="切断" onclick="wsclose()"/>
     <hr>
+    <select id="targetUser">
+        <option value="ALL">ALL</option>
+    </select>
     <input type="text" id="message" value=""/>
     <input type="button" value="送信" onclick="send()"/>
     <hr>
