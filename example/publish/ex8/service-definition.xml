@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+<ifdef name="Mode" value="Client">
+        
+        <!-- メッセージ受信サービス -->
+        <service name="MessageReceiver"
+                 code="jp.ossc.nimbus.service.publish.MessageReceiverService">
+            
+            <!-- クライアントコネクションファクトリが登録されているRMIサーバを参照するリポジトリサービスを設定する -->
+            <attribute name="JndiRepositoryServiceName">#RemoteRMIRepository</attribute>
+            
+            <!-- サービスの開始時に受信を開始するように設定する -->
+            <attribute name="StartReceiveOnStart">true</attribute>
+            
+            <!-- サブジェクト hoge へのメッセージを受信するメッセージリスナを登録する -->
+            <invoke name="addMessageListener">
+                <argument type="jp.ossc.nimbus.service.publish.MessageListener">
+                    <object code="SampleMessageListener"/>
+                </argument>
+                <argument>hoge</argument>
+            </invoke>
+            
+            <depends>
+                <!-- RMIサーバを参照するリポジトリサービス -->
+                <service name="RemoteRMIRepository"
+                         code="jp.ossc.nimbus.service.repository.RMIRepositoryService">
+                    <attribute name="HostName">localhost</attribute>
+                    <attribute name="Port">1099</attribute>
+                </service>
+            </depends>
+        </service>
+        
+</ifdef>
+<ifdef name="Mode" value="Server">
+        
+        <!-- 分散コネクションファクトリサービス -->
+        <service name="ConnectionFactory"
+                 code="jp.ossc.nimbus.service.publish.DistributedConnectionFactoryService">
+            
+            <!-- クライアントコネクションファクトリを登録するRMIサーバリポジトリサービスを設定する -->
+            <attribute name="JndiRepositoryServiceName">#LocalRMIRepository</attribute>
+            
+            <!-- 分散させるコネクションファクトリのファクトリサービスを設定する -->
+            <attribute name="ConnectionFactoryFactoryServiceName">#ConnectionFactoryFactory</attribute>
+            
+            <!-- 分散数を設定する -->
+            <attribute name="DistributedSize">3</attribute>
+            
+            <depends>
+                <!-- RMIサーバに登録するリポジトリサービス -->
+                <service name="LocalRMIRepository"
+                         code="jp.ossc.nimbus.service.repository.RMIRepositoryService">
+                    <attribute name="CreateRegistry">true</attribute>
+                    <attribute name="Port">1099</attribute>
+                </service>
+            </depends>
+            <depends>ConnectionFactoryFactory</depends>
+        </service>
+        
+        <!-- UDPコネクションファクトリのファクトリサービス -->
+        <service name="ConnectionFactoryFactory"
+                 code="jp.ossc.nimbus.service.publish.udp.ConnectionFactoryFactoryService">
+            <attribute name="Management">true</attribute>
+            <attribute name="MulticastGroupAddress">224.1.1.1</attribute>
+            <attribute name="PortIncremental">10</attribute>
+            <attribute name="NIO">true</attribute>
+        </service>
+        
+</ifdef>
+        
+    </manager>
+    
+</server>
