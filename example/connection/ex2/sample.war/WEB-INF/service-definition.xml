@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+<!DOCTYPE server PUBLIC
+  "-//Nimbus//DTD Nimbus 1.0//JA"
+  "http://nimbus.sourceforge.jp/dtd/nimbus-service_1_0.dtd">
+
+<server>
+    
+    <default-log>
+        <debug output="false"/>
+        <information output="false"/>
+        <warning output="true"/>
+        <error output="true"/>
+        <fatal output="true"/>
+    </default-log>
+    
+    <manager>
+        
+        <!-- データソース経由でConnectionを取得するConnectionFactoryサービス -->
+        <service name="ConnectionFactory"
+                 code="jp.ossc.nimbus.service.connection.DataSourceConnectionFactoryService">
+            
+            <!-- データソース名を設定する -->
+            <attribute name="Name">java:/DefaultDS</attribute>
+            
+            <!-- データソースをJNDIからlookupするJndiFinderサービスのサービス名を設定する -->
+            <attribute name="JndiFinderServiceName">#JndiFinder</attribute>
+            
+            <depends>
+                <!-- JNDIからlookupするJndiFinderサービス -->
+                <service name="JndiFinder"
+                         code="jp.ossc.nimbus.service.jndi.CachedJndiFinderService">
+                    <attribute name="Environment">
+                        java.naming.factory.initial=org.jnp.interfaces.NamingContextFactory
+                        java.naming.factory.url.pkgs=org.jboss.naming:org.jnp.interfaces
+                        java.naming.provider.url=localhost:1099
+                    </attribute>
+                    <attribute name="CacheMapServiceName">#JndiCache</attribute>
+                    <depends>
+                        <!-- メモリ中にキャッシュするCacheMapサービス -->
+                        <service name="JndiCache"
+                                 code="jp.ossc.nimbus.service.cache.MemoryCacheMapService"/>
+                    </depends>
+                </service>
+            </depends>
+            
+        </service>
+        
+    </manager>
+    
+</server>
